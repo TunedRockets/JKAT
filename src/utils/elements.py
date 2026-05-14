@@ -1,0 +1,156 @@
+''' 
+simple equations for converting between different elements,
+and getting simple resulting variables
+
+relevant variables are:
+p - parameter
+a - semi-major axis
+h - angular momentum
+e - eccentricity
+i -inclination
+raan - right ascention of ascending node
+argp - argument of periapsis
+f - true anomaly
+longp - longitude of periapsis
+arglat - argument of latitude
+l - true longitude
+r - radius
+v - velocity
+vr - radial velocity
+vt - tangential velocity
+fpa - flight path angle
+vesc - escape velocity
+vcirc - circular velocity
+vinf - excess velocity
+c3 - characteristic energy
+finf - hyperbolic asymptote angle
+ap - apoapsis
+pe - periapsis
+
+
+for now, only supports single inputs, but changing to
+numpy is trivial
+'''
+from .anomalies import a2T
+import math as m
+
+__all__ = [
+    'h2p',
+    'a2p',
+    'ap',
+    'pe',
+    'apse2ae',
+    'r',
+    'v',
+    'vt',
+    'vr',
+    'v',
+    'fpa',
+    'vcirc',
+    'vesc',
+    'vinf',
+    'c3',
+    'finf',
+    'turn_angle',
+    'aiming_radius',
+    'hohmann_transfer'
+]
+
+
+
+# === ellipses ===
+
+def h2p(h:float, mu:float)->float:
+    '''anglular momentum to parameter'''
+    return h**2/mu
+
+def a2p(a:float,e:float)->float:
+    '''semi major axis to parameter'''
+    return a*(1-e**2)
+
+def ap(a:float,e:float)->float:
+    '''apoapsis'''
+    if e < 1: return a*(1-e)
+    else: return m.inf
+    
+
+def pe(a:float,e:float)->float:
+    '''periapsis'''
+    return a*(1+e)
+
+def apse2ae(ap:float, pe:float)->tuple[float,float]:
+    '''semi-major axis and eccentricity from apsides'''
+    return 0.5*(ap+pe), abs(ap-pe)/(ap+pe)
+
+# === polar equation derivatives ===
+
+def r(f:float, p:float, e:float)->float:
+    '''polar equation radius'''
+    return p/(1+e*m.cos(f))
+
+def vt(f:float, p:float, e:float, h:float)->float:
+    '''tangential velocity'''
+    return h/r(f,p,e)
+
+def vr(f:float, p:float, e:float, h:float)->float:
+    '''radial velocity'''
+    return h/p * e * m.sin(f)
+
+def v(f:float, p:float, e:float, h:float)->float:
+    '''scalar velocity'''
+    return m.sqrt(vr(f,p,e,h)**2 + vt(f,p,e,h)**2)
+
+def fpa(f:float, e:float)->float:
+    '''flight path angle'''
+    return m.atan(e*m.sin(f)/(1+e*m.cos(f)))
+
+# === hyperbolic values ====
+
+def vcirc(f:float, p:float, e:float, h:float)->float:
+    '''circular velocity'''
+    return m.sqrt((h**2/p)/r(f,p,e))
+
+def vesc(f:float, p:float, e:float, h:float)->float:
+    '''escape velocity'''
+    return m.sqrt(2*(h**2/p)/r(f,p,e))
+    
+def vinf(f:float, p:float, e:float, h:float)->float:
+    '''excess velocity'''
+    if e < 1: return m.nan
+    else: return m.sqrt((h**2 * (e**2 - 1)))
+
+def c3(f:float, p:float, e:float, h:float)->float:
+    '''characteristic energy'''
+    return (h**2 * (e**2 - 1))
+
+def finf(e:float)->float:
+    '''hyperbolic asymptote angle'''
+    if e <= 1: return m.nan
+    else: return m.acos(-1/e)
+
+def turn_angle(e:float)->float:
+    '''double the hyperbolic asymptote angle'''
+    if e <= 1: return m.nan
+    else: return 2*m.acos(-1/e)
+
+def aiming_radius(p:float,e:float)->float:
+    '''hyperbolic aiming radius'''
+    if e <= 1: return m.nan
+    else: return (p/(e**2-1))*m.sqrt(e**2 - 1)
+
+
+# === hohmann functions ====
+
+def hohmann_transfer(r1:float, r2:float ,mu:float)->tuple[float, float, float]:
+    '''calculate delta v and travel time for a hohmann transfer,
+    return dv1, dv2, travel time'''
+    # ensure right ordering:
+    
+    dv1 = m.sqrt(mu/r1)*abs(
+        m.sqrt(2*r2/(r1+r2)) - 1)
+    dv2 = m.sqrt(mu/r1)*abs(
+        m.sqrt(2*r1/(r1+r2)) - 1)
+    T = a2T(apse2ae(r1,r2)[0],mu)
+    return dv1,dv2, T/2
+
+
