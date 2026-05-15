@@ -9,7 +9,7 @@ see `elements.py` for list of relevant variables
 import math as m
 import numpy as np
 
-from .elements import finf, r
+from .elements import finf, f2r
 
 __all__ = [
     'Q_basis',
@@ -58,7 +58,7 @@ def kep2rvec(f:float,
         f"Invalid true anomaly for hyperbolic orbit. {abs(f)} > {finf(e)}"
     )
 
-    rvec = r(f,p,e) * np.array([m.cos(f), m.sin(f), 0]) # rvec in pqw
+    rvec = f2r(f,p,e) * np.array([m.cos(f), m.sin(f), 0]) # rvec in pqw
     rvec = Q_basis(raan,i,argp)@rvec
     return rvec
 
@@ -90,7 +90,7 @@ def kep2vectors(f:float,
         f"Invalid true anomaly for hyperbolic orbit. {abs(f)} > {finf(e)}"
     )
     Q = Q_basis(raan,i,argp)
-    rvec = r(f,p,e) * np.array([m.cos(f), m.sin(f), 0]) # rvec in pqw
+    rvec = f2r(f,p,e) * np.array([m.cos(f), m.sin(f), 0]) # rvec in pqw
     rvec = Q@rvec
 
     vvec = h/p * np.array([-m.sin(f),e + m.cos(f), 0]) # vvec in pqw

@@ -1,6 +1,8 @@
 ''' 
 simple equations for converting between different elements,
-and getting simple resulting variables
+and getting simple resulting variables.
+this way there is no trivial mistype when using these simple
+equations. if this were C++ then they would be inline or smth.
 
 relevant variables are:
 p - parameter
@@ -36,16 +38,22 @@ import math as m
 
 __all__ = [
     'h2p',
+    'p2h',
     'a2p',
+    'p2a',
+    'h2a',
     'ap',
     'pe',
     'apse2ae',
-    'r',
-    'v',
-    'vt',
-    'vr',
-    'v',
-    'fpa',
+    'longp',
+    'arglat',
+    'l',
+    'f2r',
+    'f2v',
+    'f2vt',
+    'f2vr',
+    'f2v',
+    'f2fpa',
     'vcirc',
     'vesc',
     'vinf',
@@ -64,9 +72,23 @@ def h2p(h:float, mu:float)->float:
     '''anglular momentum to parameter'''
     return h**2/mu
 
+def p2h(p:float, mu:float)->float:
+    '''parameter to angular momentum'''
+    return m.sqrt(p*mu)
+
 def a2p(a:float,e:float)->float:
     '''semi major axis to parameter'''
     return a*(1-e**2)
+
+def p2a(p:float, e:float)->float:
+    '''parameter to semi major axis'''
+    if e == 1: return m.inf
+    else: return p / (1-e**2)
+
+def h2a(h:float, e:float, mu:float)->float:
+    '''angular momentum to semi major axis'''
+    if e == 1: return m.inf
+    else: return h**2 / (mu * (1-e**2))
 
 def ap(a:float,e:float)->float:
     '''apoapsis'''
@@ -84,42 +106,56 @@ def apse2ae(ap:float, pe:float)->tuple[float,float]:
 
 # === polar equation derivatives ===
 
-def r(f:float, p:float, e:float)->float:
+def f2r(f:float, p:float, e:float)->float:
     '''polar equation radius'''
     return p/(1+e*m.cos(f))
 
-def vt(f:float, p:float, e:float, h:float)->float:
+def f2vt(f:float, p:float, e:float, h:float)->float:
     '''tangential velocity'''
-    return h/r(f,p,e)
+    return h/f2r(f,p,e)
 
-def vr(f:float, p:float, e:float, h:float)->float:
+def f2vr(f:float, p:float, e:float, h:float)->float:
     '''radial velocity'''
     return h/p * e * m.sin(f)
 
-def v(f:float, p:float, e:float, h:float)->float:
+def f2v(f:float, p:float, e:float, h:float)->float:
     '''scalar velocity'''
-    return m.sqrt(vr(f,p,e,h)**2 + vt(f,p,e,h)**2)
+    return m.sqrt(f2vr(f,p,e,h)**2 + f2vt(f,p,e,h)**2)
 
-def fpa(f:float, e:float)->float:
+def f2fpa(f:float, e:float)->float:
     '''flight path angle'''
     return m.atan(e*m.sin(f)/(1+e*m.cos(f)))
+
+# === alternate elements ====
+def longp(raan:float, argp:float)->float:
+    '''longitude of periapsis'''
+    return raan+argp
+
+def arglat(f:float,argp:float)->float:
+    '''argument of latitude'''
+    return f + argp
+
+def l(f:float, raan:float, argp:float)->float:
+    '''true longitude'''
+    return f + raan + argp
+
 
 # === hyperbolic values ====
 
 def vcirc(f:float, p:float, e:float, h:float)->float:
     '''circular velocity'''
-    return m.sqrt((h**2/p)/r(f,p,e))
+    return m.sqrt((h**2/p)/f2r(f,p,e))
 
 def vesc(f:float, p:float, e:float, h:float)->float:
     '''escape velocity'''
-    return m.sqrt(2*(h**2/p)/r(f,p,e))
+    return m.sqrt(2*(h**2/p)/f2r(f,p,e))
     
-def vinf(f:float, p:float, e:float, h:float)->float:
+def vinf(e:float, h:float)->float:
     '''excess velocity'''
     if e < 1: return m.nan
     else: return m.sqrt((h**2 * (e**2 - 1)))
 
-def c3(f:float, p:float, e:float, h:float)->float:
+def c3(e:float, h:float)->float:
     '''characteristic energy'''
     return (h**2 * (e**2 - 1))
 

@@ -9,6 +9,7 @@ import math as m
 __all__ = [
     "root_finder_bisection",
     "root_finder_newton",
+    "root_finder_fallback",
 ]
 
 
@@ -67,3 +68,18 @@ def root_finder_newton(f:Callable[[float],float], df:Callable[[float],float],x0:
         dx = fx/df(x0)
         x0 = x0 - dx
     else: raise ArithmeticError("Newton's method failed to converge")
+
+def root_finder_fallback(f:Callable[[float],float],
+                         df:Callable[[float],float],
+                         lower:float, 
+                         upper:float,
+                         max_iter:int = 100, 
+                         precision:float=1e-6):
+    '''Root finder that tries to use newton, but falls back on bisection
+    if newton fails to converge'''
+    try:
+        x0 = root_finder_newton(f,df,(upper+lower)/2,max_iter,precision)
+        if not (lower < x0 < upper): raise ArithmeticError("Converged wrong")
+    except ArithmeticError:
+        x0 = root_finder_bisection(f,lower,upper,precision)
+    return x0

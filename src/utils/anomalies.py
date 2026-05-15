@@ -24,7 +24,9 @@ for now, only supports single inputs, but changing to
 numpy is trivial
 '''
 import math as m
-from .optim import root_finder_newton
+from .optim import root_finder_newton, root_finder_fallback
+from .elements import longp, h2a, pe, finf
+from .misc import stumpff_c, stumpff_s
 
 # for star importing:
 __all__ = [
@@ -37,7 +39,15 @@ __all__ = [
     "M2t",
     "t2M",
     "t2f",
-    "f2t"
+    "f2t",
+    "t2f_kep",
+    "f2t_kep",
+    't2L',
+    'L2t',
+    't2X',
+    'X2t',
+    'X2f',
+    'f2X'
 ]
 
 # ===== standard kepler =====
@@ -102,27 +112,110 @@ def E2f(E:float, e:float)->float:
     else:
         return 2*m.atan(m.sqrt((e+1)/(e-1))*m.tanh(E/2))
     
-def M2t(M:float, h:float,e:float, mu:float)->float:
+def M2t(M:float, e:float, h:float, mu:float)->float:
     ''' Mean anomaly to time'''
     return M / h2n(h,e,mu)
 
-def t2M(t:float, h:float,e:float, mu:float)->float:
+def t2M(t:float, e:float, h:float, mu:float)->float:
     '''time to mean anomaly'''
     return t * h2n(h,e,mu)
 
-def t2f(t:float, h:float, e:float, mu:float)->float:
+def t2f_kep(t:float, e:float, h:float, mu:float)->float:
     '''time to true anomaly, using kepler's method'''
     M = t2M(t,h,e,mu)
     E = M2E(M,e)
     f = E2f(E,e)
     return f
 
-def f2t(f:float, h:float, e:float, mu:float)->float:
+def f2t_kep(f:float, e:float, h:float, mu:float)->float:
     '''true anomaly to time, using kepler's method'''
+    if e > 1 and abs(f) > finf(e): raise ArithmeticError(
+        f"Invalid true anomaly for hyperbolic orbit. {abs(f)} > {finf(e)}"
+    )
     E = f2E(f,e)
     M = E2M(E,e)
     t = M2t(M,h,e,mu)
     return t
 
 
+# === alternate anomalies ====
 
+def t2L(t:float, e:float, h:float, mu:float, raan:float, argp:float)->float:
+    '''time to mean longitude'''
+    return longp(raan,argp) + t2M(t,h,e,mu)
+
+def L2t(L:float, e:float, h:float, mu:float, raan:float, argp:float)->float:
+    '''mean longitude to time'''
+    return M2t((L-longp(raan,argp)),h,e,mu)
+
+# === universal variables ===
+
+def t2X(t:float, e:float, h:float, mu:float)->float:
+    '''time to universal anomaly, assumes X = 0 at t = 0 at periapsis'''
+
+    if t==0: return 0.0 # by definition
+    # e==0 might have issues as well. test and check
+
+    a = h2a(h,e,mu)
+    rp = pe(a,e)
+    S = stumpff_s
+    C = stumpff_c
+    root_mu = m.sqrt(mu)
+    F = lambda chi: (1-rp/a)*chi**3 * S(chi**2/a) + rp*chi - root_mu*t
+    dF = lambda chi: (1-rp/a)*chi**2 * C(chi**2/a) + rp
+
+    # root finding can have issues, look into what below is needed:
+    # (before the min max needed to be expanded for it
+    # to converge properly)
+    X_max = root_mu*t/rp # min max based on prussing and conway
+    X_min = root_mu*t/(h*h/(mu*(1-e))) if e < 1 else 0.0
+    if X_max < X_min: X_min,X_max = X_max,X_min # swap if wrong signs
+    X = root_finder_fallback(F,dF,X_min,X_max)
+    return X
+    
+
+
+def X2t(X:float, e:float, h:float, mu:float)->float:
+    '''universal anomaly to time, assumes X = 0 at t = 0 at periapsis'''
+
+    if X==0: return 0.0 # by definition
+    # e==0 might have issues as well. test and check
+
+    a = h2a(h,e,mu)
+    rp = pe(a,e)
+    S = stumpff_s
+    return (
+        (1 - rp*a)*X**3 * S(a*X**2) + rp*X
+    )/m.sqrt(mu)
+
+
+def X2f(X:float,e:float, h:float, mu:float)->float:
+    '''universal anomaly to true anomaly'''
+
+    # first find eccentric anomaly, then E2f
+    if e == 1: return 2 * m.atan(m.sqrt(mu)*X/h)
+
+    # hyperbolic and eccentric have same eq
+    E = m.sqrt(mu*abs(1-e**2))/h * X
+    return E2f(E, e)
+
+def f2X(f:float, e:float, h:float, mu:float)->float:
+    '''true anomaly to universal anomaly'''
+
+    if e == 1: return h/m.sqrt(mu) * m.tan(f/2)
+
+    E = f2E(f,e)
+    return h/m.sqrt(mu*abs(1-e**2)) * E
+
+def f2t(f:float, e:float, h:float, mu:float)->float:
+    '''true anomaly to time using universal variable method'''
+    if e > 1 and abs(f) > finf(e): raise ArithmeticError(
+        f"Invalid true anomaly for hyperbolic orbit. {abs(f)} > {finf(e)}"
+    )
+    X = f2X(f,e,h,mu)
+    return X2t(X,e,h,mu)
+
+def t2f(t:float, e:float, h:float, mu:float)->float:
+    '''time to true anomaly using universal variable method'''
+    X = t2X(t,e,h,mu)
+    return X2f(X,e,h,mu)
