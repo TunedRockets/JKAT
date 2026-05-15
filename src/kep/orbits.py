@@ -2,6 +2,7 @@
 
 import math as m
 import numpy as np
+from typing import Never,overload
 from ..utils import * # change to non-star
 __all__ = [
     'Orbit'
@@ -117,14 +118,7 @@ class Orbit():
         # p = h^2/mu
         self.p = h2p(h,self.mu)
 
-    def f(self, t:float = 0)->float:
-        '''true anomaly at a given time, (defaults to epoch)'''
-        return t2f(t,self.e,self.h,self.mu)
     
-    @property
-    def true_anomaly(self)->float:
-        '''true anomaly at epoch, alias of self.f(0)'''
-        return self.f(0)
 
     @property
     def longp(self)->float:
@@ -136,14 +130,7 @@ class Orbit():
         '''longitude of periapsis, alias of self.longp'''
         return self.longp
     
-    def l(self,t:float = 0)->float:
-        '''true longitude at a given time (defaults to epoch)'''
-        return l(self.f(t),self.raan,self.argp)
-
-    @property
-    def true_longitude(self)->float:
-        '''true longitude at epoch, alias of self.l(0)'''
-        return self.l(0)
+    
     
     # === polar equation derivatives ===
 
@@ -215,15 +202,67 @@ class Orbit():
 
     # === timing ===
 
-    def T():...
+    def f(self, t:float = 0)->float:
+        '''true anomaly at a given time, (defaults to epoch)'''
+        return t2f(t,self.e,self.h,self.mu)
+    
+    @property
+    def true_anomaly(self)->float:
+        '''true anomaly at epoch, alias of self.f(0)'''
+        return self.f(0)
+    
+    def l(self,t:float = 0)->float:
+        '''true longitude at a given time (defaults to epoch)'''
+        return l(self.f(t),self.raan,self.argp)
 
-    def M():...
+    @property
+    def true_longitude(self)->float:
+        '''true longitude at epoch, alias of self.l(0)'''
+        return self.l(0)
+    
+    def t(self,f:float=0)->float:
+        '''time at given true anomaly, (defaults to periapsis)'''
+        return f2t(f,self.e,self.h,self.mu)
 
-    def L():...
+    @property
+    def T(self)->float:
+        '''period of the orbit'''
+        return a2T(self.a,self.mu)
+    
+    @property
+    def period(self)->float:
+        '''period of the orbit. alias of self.T'''
+        return self.T
+    
 
-    def X():...
 
-    def n():...
+
+
+    def t2M(self,t:float)->float:
+        '''time to mean anomaly'''
+
+        return t2M(t,self.e,self.h,self.mu)
+    def f2M(self,f:float)->float:
+        '''true anomaly to mean anomaly'''
+        E= f2E(f,self.e)
+        return E2M(E,self.e)
+
+    def t2L(self, t:float)->float:
+        '''time to mean longitude'''
+        return t2L(t,self.e,self.h,self.mu,self.raan,self.argp)
+
+    def t2X(self,t:float)->float:
+        '''time to universal anomaly'''
+        return t2X(t,self.e,self.h,self.mu)
+    
+    def f2X(self, f:float)->float:
+        '''true anomaly to unversal anomaly'''
+        return f2X(f,self.e,self.h,self.mu)
+
+    @property
+    def n(self)->float:
+        '''mean motion of orbit'''
+        return h2n(self.h,self.e,self.mu)
 
     def link_tf(self,t:float,f:float)->float:...
 
