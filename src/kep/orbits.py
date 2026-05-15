@@ -229,6 +229,19 @@ class Orbit():
 
     # === vectors ===
 
+    def rvec(self, f:float)->np.ndarray:
+        '''position vector at given true anomaly'''
+        return kep2rvec(f,self.p,self.e,self.i,self.raan,self.argp)
 
-    
+    def vvec(self, f:float)->np.ndarray:
+        '''velocity vector at given true anomaly'''
+        return kep2vvec(f,self.p,self.e,self.h,self.i,self.raan,self.argp)
 
+    def vectors(self,f:float)->tuple[np.ndarray,np.ndarray]:
+        '''position and velocity vectors at given true anomaly'''
+        return kep2vectors(f,self.p,self.e,self.h,self.i,self.raan,self.argp)
+
+    @property
+    def Q_basis(self)->np.ndarray:
+        '''Perifocal frame basis'''
+        return Q_basis(self.raan,self.i,self.argp)

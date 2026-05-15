@@ -16,7 +16,7 @@ __all__ = [
     'kep2rvec',
     'kep2vvec',
     'kep2vectors',
-    'vectors2kep'
+    'vectors2kep',
 ]
 
 
@@ -45,11 +45,11 @@ def Q_basis(raan:float, i:float, argp:float)->np.ndarray:
     return Q
 
 def kep2rvec(f:float,
-         e:float,
-         p:float,
-         i:float,
-         raan:float,
-         argp:float)->np.ndarray:
+             p:float,
+             e:float,
+             i:float,
+             raan:float,
+             argp:float)->np.ndarray:
     '''position vector in inertial frame'''
 
 
@@ -63,12 +63,12 @@ def kep2rvec(f:float,
     return rvec
 
 def kep2vvec(f:float,
-         e:float,
-         p:float,
-         h:float,
-         i:float,
-         raan:float,
-         argp:float)->np.ndarray:
+             p:float,
+             e:float,
+             h:float,
+             i:float,
+             raan:float,
+             argp:float)->np.ndarray:
     '''velocity vector in inertial frame'''
 
     vvec = h/p * np.array([-m.sin(f),e + m.cos(f), 0]) # vvec in pqw
@@ -77,12 +77,12 @@ def kep2vvec(f:float,
     return vvec
 
 def kep2vectors(f:float,
-         e:float,
-         p:float,
-         h:float,
-         i:float,
-         raan:float,
-         argp:float)->tuple[np.ndarray,np.ndarray]:
+                p:float,
+                e:float,
+                h:float,
+                i:float,
+                raan:float,
+                argp:float)->tuple[np.ndarray,np.ndarray]:
     '''position and velocity vector in inertial frame'''
     
     # check invalid angles:
