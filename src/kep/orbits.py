@@ -202,27 +202,31 @@ class Orbit():
 
     # === timing ===
 
-    def f(self, t:float = 0)->float:
-        '''true anomaly at a given time, (defaults to epoch)'''
+    def f(self, t:float = 0, after_periapsis:bool=False)->float:
+        '''true anomaly at a given time, either from epoch (default) or periapsis.'''
+        if not after_periapsis: t -= self.tp
         return t2f(t,self.e,self.h,self.mu)
     
     @property
     def true_anomaly(self)->float:
-        '''true anomaly at epoch, alias of self.f(0)'''
-        return self.f(0)
+        '''true anomaly at epoch, alias of self.f(self.tp)'''
+        return self.f(self.tp)
     
-    def l(self,t:float = 0)->float:
-        '''true longitude at a given time (defaults to epoch)'''
+    def l(self,t:float = 0, after_periapsis:bool=False)->float:
+        '''true longitude at a given time, either from epoch (default) or periapsis.'''
+        if not after_periapsis: t -= self.tp
         return l(self.f(t),self.raan,self.argp)
 
     @property
     def true_longitude(self)->float:
-        '''true longitude at epoch, alias of self.l(0)'''
-        return self.l(0)
+        '''true longitude at epoch, alias of self.l(self.tp)'''
+        return self.l(self.tp)
     
-    def t(self,f:float=0)->float:
-        '''time at given true anomaly, (defaults to periapsis)'''
-        return f2t(f,self.e,self.h,self.mu)
+    def t(self,f:float=0, after_periapsis:bool=False)->float:
+        '''time at given true anomaly, either from epoch (default) or periapsis.'''
+        t = f2t(f,self.e,self.h,self.mu)
+        if after_periapsis: t += self.tp
+        return t
 
     @property
     def T(self)->float:
@@ -235,24 +239,30 @@ class Orbit():
         return self.T
     
 
-
-
-
-    def t2M(self,t:float)->float:
-        '''time to mean anomaly'''
-
+    def t2M(self,t:float, after_periapsis:bool=False)->float:
+        '''time to mean anomaly, either from epoch (default) or periapsis.'''
+        if not after_periapsis: t -= self.tp
         return t2M(t,self.e,self.h,self.mu)
+    
+    def M2t(self,M:float, after_periapsis:bool=False)->float:
+        '''mean anomaly to time, either from epoch (default) or periapsis.'''
+        t = M2t(M,self.e,self.h,self.mu)
+        if after_periapsis: t += self.tp
+        return t
+
     def f2M(self,f:float)->float:
         '''true anomaly to mean anomaly'''
         E= f2E(f,self.e)
         return E2M(E,self.e)
 
-    def t2L(self, t:float)->float:
-        '''time to mean longitude'''
+    def t2L(self, t:float, after_periapsis:bool=False)->float:
+        '''time to mean longitude, either from epoch (default) or periapsis.'''
+        if not after_periapsis: t -= self.tp
         return t2L(t,self.e,self.h,self.mu,self.raan,self.argp)
 
-    def t2X(self,t:float)->float:
-        '''time to universal anomaly'''
+    def t2X(self,t:float, after_periapsis:bool=False)->float:
+        '''time to universal anomaly, either from epoch (default) or periapsis.'''
+        if not after_periapsis: t -= self.tp
         return t2X(t,self.e,self.h,self.mu)
     
     def f2X(self, f:float)->float:
@@ -264,7 +274,11 @@ class Orbit():
         '''mean motion of orbit'''
         return h2n(self.h,self.e,self.mu)
 
-    def link_tf(self,t:float,f:float)->float:...
+    def link_tf(self,t:float,f:float)->float:
+        '''link a certain time and true anomaly by changing tp'''
+        t_after = self.t(f,True)
+        self.tp = t - t_after
+        return self.tp
 
     # === vectors ===
 

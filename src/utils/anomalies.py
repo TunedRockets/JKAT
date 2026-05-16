@@ -44,6 +44,8 @@ __all__ = [
     "f2t_kep",
     't2L',
     'L2t',
+    'L2M',
+    'M2L',
     't2X',
     'X2t',
     'X2f',
@@ -142,11 +144,21 @@ def f2t_kep(f:float, e:float, h:float, mu:float)->float:
 
 def t2L(t:float, e:float, h:float, mu:float, raan:float, argp:float)->float:
     '''time to mean longitude'''
-    return longp(raan,argp) + t2M(t,h,e,mu)
+    M = t2M(t,h,e,mu)
+    return M2L(M,raan,argp)
 
 def L2t(L:float, e:float, h:float, mu:float, raan:float, argp:float)->float:
     '''mean longitude to time'''
-    return M2t((L-longp(raan,argp)),h,e,mu)
+    M = L2M(L,raan,argp)
+    return M2t(M,h,e,mu)
+
+def M2L(M:float,raan:float,argp:float)->float:
+    '''mean anomaly to mean longitude'''
+    return longp(raan, argp) + M
+
+def L2M(L:float,raan:float,argp:float)->float:
+    '''mean longitude to mean anomaly'''
+    return L-longp(raan,argp) 
 
 # === universal variables ===
 
