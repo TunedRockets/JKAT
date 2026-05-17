@@ -53,6 +53,11 @@ __all__ = [
     'f2X'
 ]
 
+# clamp f for hyperbolic checks
+clamp_f = lambda f: ((f+m.pi) % (2*m.pi)) - m.pi
+
+
+
 # ===== standard kepler =====
 
 def a2T(a:float, mu:float)->float:
@@ -136,6 +141,7 @@ def t2f_kep(t:float, e:float, h:float, mu:float)->float:
 
 def f2t_kep(f:float, e:float, h:float, mu:float)->float:
     '''true anomaly to time, using kepler's method'''
+    if e >= 1: f = clamp_f(f)
     if e > 1 and abs(f) > elem.finf(e): raise ArithmeticError(
         f"Invalid true anomaly for hyperbolic orbit. {abs(f)} > {elem.finf(e)}"
     )
@@ -174,7 +180,7 @@ def t2X(t:float, e:float, h:float, mu:float)->float:
     # e==0 might have issues as well. test and check
 
     a = elem.h2a(h,e,mu)
-    rp = elem.pe(a,e)
+    rp = elem.h2pe(e,h,mu)
     S = stumpff_s
     C = stumpff_c
     root_mu = m.sqrt(mu)
@@ -199,10 +205,10 @@ def X2t(X:float, e:float, h:float, mu:float)->float:
     # e==0 might have issues as well. test and check
 
     a = elem.h2a(h,e,mu)
-    rp = elem.pe(a,e)
+    rp = elem.a2pe(a,e)
     S = stumpff_s
     return (
-        (1 - rp*a)*X**3 * S(a*X**2) + rp*X
+        (1 - rp/a)*X**3 * S(X**2/a) + rp*X
     )/m.sqrt(mu)
 
 
@@ -226,6 +232,7 @@ def f2X(f:float, e:float, h:float, mu:float)->float:
 
 def f2t(f:float, e:float, h:float, mu:float)->float:
     '''true anomaly to time using universal variable method'''
+    if e >= 1: f = clamp_f(f)
     if e > 1 and abs(f) > elem.finf(e): raise ArithmeticError(
         f"Invalid true anomaly for hyperbolic orbit. {abs(f)} > {elem.finf(e)}"
     )

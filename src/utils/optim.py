@@ -16,7 +16,7 @@ __all__ = [
 
 # === root finders ===
 
-def root_finder_bisection(f:Callable[[float],float], lower:float, upper:float, tolerance:float = 1e-8)->float:
+def root_finder_bisection(f:Callable[[float],float], lower:float, upper:float, tolerance:float = 1e-10)->float:
     '''takes a univariate function and finds the root of that function
     through recursive bisection.
     converges on a root between bounds, provided bounds are of different sign
@@ -44,7 +44,7 @@ def root_finder_bisection(f:Callable[[float],float], lower:float, upper:float, t
             lower = middle
     return middle
 
-def root_finder_newton(f:Callable[[float],float], df:Callable[[float],float],x0:float, max_iter:int = 100, precision:float=1e-6)->float:
+def root_finder_newton(f:Callable[[float],float], df:Callable[[float],float],x0:float, max_iter:int = 100, precision:float=1e-10)->float:
     '''Newton-Raphson root finding algorithm in 1D
 
     :param f: function to find root of
@@ -74,7 +74,7 @@ def root_finder_fallback(f:Callable[[float],float],
                          lower:float, 
                          upper:float,
                          max_iter:int = 100, 
-                         precision:float=1e-6):
+                         precision:float=1e-10):
     '''Root finder that tries to use newton, but falls back on bisection
     if newton fails to converge'''
     try:

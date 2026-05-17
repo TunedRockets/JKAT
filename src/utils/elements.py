@@ -42,8 +42,10 @@ __all__ = [
     'a2p',
     'p2a',
     'h2a',
-    'ap',
-    'pe',
+    'a2ap',
+    'a2pe',
+    'h2ap',
+    'h2pe',
     'apse2ae',
     'pe2p',
     'r2f',
@@ -92,15 +94,23 @@ def h2a(h:float, e:float, mu:float)->float:
     if e == 1: return m.inf
     else: return h**2 / (mu * (1-e**2))
 
-def ap(a:float,e:float)->float:
+def a2ap(a:float,e:float)->float:
     '''apoapsis'''
-    if e < 1: return a*(1-e)
+    if e < 1: return a*(1+e)
     else: return m.inf
     
 
-def pe(a:float,e:float)->float:
+def a2pe(a:float,e:float)->float:
     '''periapsis'''
-    return a*(1+e)
+    return a*(1-e)
+
+def h2ap(e:float, h:float, mu:float):
+    '''angular momentum to apoapsis'''
+    return (h**2/mu) / (1-e)
+
+def h2pe(e:float, h:float, mu:float):
+    '''angular momentum to periapsis'''
+    return (h**2/mu) / (1+e)
 
 def apse2ae(ap:float, pe:float)->tuple[float,float]:
     '''semi-major axis and eccentricity from apsides'''
@@ -164,14 +174,14 @@ def vesc(f:float, p:float, e:float, h:float)->float:
     '''escape velocity'''
     return m.sqrt(2*(h**2/p)/f2r(f,p,e))
     
-def vinf(e:float, h:float)->float:
+def vinf(e:float, h:float, mu:float)->float:
     '''excess velocity'''
     if e < 1: return m.nan
-    else: return m.sqrt((h**2 * (e**2 - 1)))
+    else: return (mu/h)*m.sqrt((e**2 - 1))
 
-def c3(e:float, h:float)->float:
+def c3(e:float, h:float, mu:float)->float:
     '''characteristic energy'''
-    return (h**2 * (e**2 - 1))
+    return ((mu/h)**2 * (e**2 - 1))
 
 def finf(e:float)->float:
     '''hyperbolic asymptote angle'''

@@ -47,7 +47,9 @@ class Orbit():
         self.mu = mu
         '''Parent body standard gravitational parameter'''
 
-
+    def __repr__(self) -> str: # always need a repr (for debugging at least)
+        return f"Orbit:\n {self.p=}\n {self.e=}\n {self.i=}\n {self.raan=}\n {self.argp=}\n {self.tp=}\n {self.mu=}"
+    
 # ======================
 # properties
 # ======================
@@ -157,7 +159,7 @@ class Orbit():
     @property
     def ap(self)->float:
         '''apoapsis'''
-        return ap(self.a, self.e)
+        return a2ap(self.a, self.e)
     
     @property
     def apoapsis(self)->float:
@@ -167,7 +169,7 @@ class Orbit():
     @property
     def pe(self)->float:
         '''periapsis'''
-        return pe(self.a, self.e)
+        return a2pe(self.a, self.e)
     
     @property
     def periapsis(self)->float:
@@ -194,7 +196,7 @@ class Orbit():
 
         if m.isfinite(ap):
             a,e = apse2ae(ap,pe)
-            self.a = a; self.e = e
+            self.e = e; self.a = a 
             if e == 0: self.argp=0
         else: # keep e if beyond 1, otherwise set e==1:
             if self.e < 1: self.e = 1
@@ -223,12 +225,12 @@ class Orbit():
     @property
     def vinf(self)->float:
         '''excess velocity'''
-        return vinf(self.e,self.h)
+        return vinf(self.e,self.h, self.mu)
     
     @property
     def c3(self)->float:
         '''characteristic energy'''
-        return c3(self.e,self.h)
+        return c3(self.e,self.h, self.mu)
     
     @property
     def finf(self)->float:
