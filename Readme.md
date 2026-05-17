@@ -1,5 +1,4 @@
 
-![A giant cat perched atop Saint Basils Cathedral reaching for a rocket](data/Dont%20Ask.png | width=250)
 <img src="data/Dont%20Ask.png" width="400" alt="A giant cat perched atop Saint Basils Cathedral reaching for a rocket">
 # Johannes-Kepler Astrodynamical Toolbox
 
