@@ -4,8 +4,9 @@ each function will return an orbit object.
 methods for finding optimal transfers are not included, just generation of orbits
 '''
 from .orbits import Orbit
+from .solvers import lambert
 from ..utils import stumpff_c, stumpff_s, unit, a2p,\
-p2h, root_finder_bisection, L2M, M2t, f2t, apse2ae
+p2h, root_finder_bisection, L2M, M2t, f2t, vectors2kep
 import math as m
 import numpy as np
 
@@ -67,96 +68,45 @@ def orbit_from_keplerian(a:float, e:float, i:float, raan:float, argp:float, f:fl
 
 def from_elements(*,p:float|None=None, e:float|None=None, a:float|None=None,
                   ap:float|None=None, pe:float|None=None, h:float|None=None,
-                  mu:float|None=None,...)->Orbit:
+                  mu:float|None=None)->Orbit:
     '''create orbit from arbitrary list of elements'''
 
-    # geometry:
-    if not ap is None and not pe is None: # apses
-        a_, e_ = apse2ae(ap,pe)
-        if not a is None: a = a_
-        else: raise ValueError("Overconstrained definintion (ap, pe, a)")
-        if not e is None: e = e_
-        else: raise ValueError("Overconstrained definintion (ap, pe, e)")
-        p_ = a2p(a,e)
-        if not p is None: p = p_
-        else: raise ValueError("Overconstrained definintion (ap, pe, p)")
-    elif not ap is None: # only apoapsis
-        ...
-    #
+    raise NotImplementedError()
 
 
 
 
-def orbit_from_rv(r:np.ndarray, v:np.ndarray, sgp:float, time:float=0)->Orbit:
+
+
+def orbit_from_rv(rvec:np.ndarray, vvec:np.ndarray, mu:float, t:float=0)->Orbit:
     '''
     Creates an orbit given a position and velocity vector.\n
     the time is given to set the orbit within the epoch, if nothing is provided then
     it's assumed the given data is at the epoch.
     '''
+    p,e,i,raan,argp,f = vectors2kep(rvec,vvec,mu)
+    tp = t - f2t(f,e,p2h(p,mu),mu)
 
-    if np.linalg.norm(np.cross(r,v)) == 0:
-        raise NotImplementedError("Degenerate orbits are not implemented yet")
+    return Orbit(p,e,i,raan,argp,tp,mu)
 
-    h_vec = np.cross(r,v) # angular momentum vector
-    r_mag = np.linalg.norm(r)
-    v_r = r.dot(v)/r_mag
-    h = np.linalg.norm(h_vec) # angular momentum
-    e_vec = np.cross(v,h_vec)/sgp - r/r_mag # eccentricity vector
-    e = np.linalg.norm(e_vec) # eccentricty
-    p = h_vec.dot(h_vec)/sgp # parameter
-    k_hat = np.array([0,0,1]) # "up" vector
-    n_vec = np.cross(k_hat,h_vec) # node vector
-
-    # normal calculations:
-    i = m.acos(h_vec[2]/h) # inclination
-
-    RAAN = m.acos(n_vec[0]/np.linalg.norm(n_vec)) # RAAN
-    if n_vec[1] < 0: RAAN = 2*m.pi - RAAN # angle is negative (but we want to keep it in range 0-2pi)
-    
-    arg_p = m.acos(n_vec.dot(e_vec)/(np.linalg.norm(n_vec)*e)) # argument of periapsis
-    if e_vec[2] < 0: arg_p = 2*m.pi - arg_p
-
-    theta = m.acos(e_vec.dot(r)/(e*r_mag)) # true anomaly
-    if v_r < 0: theta = 2*m.pi - theta
-
-    # special cases:
-    if i==0 and e!= 0: # elliptical equitorial
-        RAAN = 0 # "ascending node" on x axis
-        arg_p = m.acos(e_vec[0]/e) # arg_p from x axis
-        if e_vec[1] < 0: arg_p = 2*m.pi - arg_p
-
-    elif e == 0 and i != 0: # circular inclined
-        
-        arg_p = 0 # "periapsis" on node
-        theta = m.acos(n_vec.dot(r)/(r_mag*np.linalg.norm(n_vec)))
-        if r[2] < 0: theta = 2*m.pi - theta
-    elif e==0 and i== 0: # circular equatorial
-        # node and periapsis on x axis
-        RAAN = 0
-        arg_p = 0
-        theta = m.acos(r[0]/r_mag)
-        if r[1]<0: theta = 2*m.pi - theta
-
-    ob = Orbit(p,e,i,RAAN,arg_p,0,sgp) # type: ignore (for e, which is "floating", not float)
-    # now figure out the passage at periapsis:
-    ob.link_time_and_theta(theta, time) # i swear to god you must work!
-    return ob
-
-def orbit_from_lambert(r1:np.ndarray, r2:np.ndarray, start_time:float,
-                        end_time:float, sgp:float, short_way:bool = True)->Orbit:
+def orbit_from_lambert(r1vec:np.ndarray, r2vec:np.ndarray, t_start:float,
+                        t_end:float, mu:float, prograde:bool|None = None)->Orbit:
     '''creates an orbit by solving lambert's problem\n
-    start_time is the time at r1, end_time is the time at r2. can choose between long and short way.\n
-    for getting only the vectors, use lambert_vectors()\n
+    start_time is the time at r1, end_time is the time at r2.
+    if prograde is left none, the short way is used, otherwise the prograde or 
+    retrograde depending on its value
     start_time also used to set orbit in proper epoch'''
-    v1, _ = lambert_vectors(r1,r2,(end_time-start_time),sgp,short_way)
-    ob = orbit_from_rv(r1,v1, sgp, start_time)
+    v1vec, _ = lambert(r1vec,r2vec,(t_end-t_start),mu,prograde)
+    ob = orbit_from_rv(r1vec,v1vec, mu, t_start)
     return ob
 
-def orbit_from_lambert_transfer(origin:Orbit, destination:Orbit, start_time:float,
-                        end_time:float, short_way:bool = True)->Orbit:
-    r1 = origin.time_to_rv(start_time)[0]
-    r2 = destination.time_to_rv(end_time)[0]
-    return orbit_from_lambert(r1,r2,start_time,end_time,origin.sgp,short_way)
+def orbit_from_lambert_transfer(origin:Orbit, destination:Orbit, t_start:float,
+                        t_end:float, prograde:bool|None = None)->Orbit:
+    '''same as orbit from lambert but with initial and final positions
+    obtained from orbits'''
+    r1vec = origin.t2rvec(t_start)
+    r2vec = destination.t2rvec(t_end)
+    return orbit_from_lambert(r1vec,r2vec,t_start,t_end,origin.mu,prograde)
     
 
 def orbit_from_gauss(observations:list[np.ndarray],

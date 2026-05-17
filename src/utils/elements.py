@@ -33,7 +33,7 @@ pe - periapsis
 for now, only supports single inputs, but changing to
 numpy is trivial
 '''
-from .anomalies import a2T
+from .anomalies import *
 import math as m
 
 __all__ = [

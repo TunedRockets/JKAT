@@ -25,7 +25,7 @@ numpy is trivial
 '''
 import math as m
 from .optim import root_finder_newton, root_finder_fallback
-from .elements import longp, h2a, pe, finf
+from .elements import *
 from .misc import stumpff_c, stumpff_s
 
 # for star importing:

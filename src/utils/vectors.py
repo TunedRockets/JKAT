@@ -146,4 +146,3 @@ def vectors2kep(rvec:np.ndarray,vvec:np.ndarray,
         if rvec[1]<0: f = 2*m.pi - f
 
     return p,e,i,raan,argp,f
-

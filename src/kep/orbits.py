@@ -285,14 +285,31 @@ class Orbit():
     def rvec(self, f:float)->np.ndarray:
         '''position vector at given true anomaly'''
         return kep2rvec(f,self.p,self.e,self.i,self.raan,self.argp)
+    
+    def t2rvec(self,t:float)->np.ndarray:
+        '''position vector at given epoch time'''
+        f = self.f(t)
+        return self.rvec(f)
+
 
     def vvec(self, f:float)->np.ndarray:
         '''velocity vector at given true anomaly'''
         return kep2vvec(f,self.p,self.e,self.h,self.i,self.raan,self.argp)
+    
+    def t2vvec(self, t:float)->np.ndarray:
+        '''velocity vector at given epoch time'''
+        f = self.f(t)
+        return self.vvec(f)
+
 
     def vectors(self,f:float)->tuple[np.ndarray,np.ndarray]:
         '''position and velocity vectors at given true anomaly'''
         return kep2vectors(f,self.p,self.e,self.h,self.i,self.raan,self.argp)
+    
+    def t2vectors(self,t:float)->tuple[np.ndarray,np.ndarray]:
+        '''position and velocity vectors at given epoch time'''
+        f = self.f(t)
+        return self.vectors(f)
 
     @property
     def Q_basis(self)->np.ndarray:
