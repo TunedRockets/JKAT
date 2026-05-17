@@ -117,6 +117,7 @@ def orbit_from_gauss(observations:list[np.ndarray],
     you also need to include the positions of the three observations at those 3 given times
     observations assumed to be normal vectors'''
     # TODO UNTESTED!!!!!
+    raise NotImplementedError()
 
     # Basic checks before we start the process:
     if len(observations) != 3 or len(times) != 3 or len(positions) != 3:
@@ -245,6 +246,7 @@ def point_to_point(p1:np.ndarray, p2:np.ndarray, radius:float, start_time:float,
     '''Create a point to point orbit between two coordinates on a sphere with given radius\n
     points given in elevation/azimuth.\n
     essentially a wrapper of the lambert function'''
+    raise NotImplementedError()
 
     long_shift_1 = epoch_angle + start_time*angular_speed
     long_shift_2 = epoch_angle + end_time*angular_speed
