@@ -25,12 +25,13 @@ numpy is trivial
 '''
 import math as m
 from .optim import root_finder_newton, root_finder_fallback
-from .elements import *
+from . import elements as elem
 from .misc import stumpff_c, stumpff_s
 
 # for star importing:
 __all__ = [
     'a2T',
+    'T2a',
     "h2n",
     "M2E",
     "E2M",
@@ -59,6 +60,10 @@ def a2T(a:float, mu:float)->float:
     (hyperbolic orbits have infinite period)'''
     if 0 < a < m.inf: return 2*m.pi*m.sqrt(a**3/mu)
     else: return m.inf
+
+def T2a(T:float, mu:float)->float:
+    '''period to semi major axis'''
+    return m.cbrt(mu * (T/(2*m.pi))**2)
 
 def h2n(h:float, e:float, mu:float)->float:
     '''angular momentum to mean motion'''
@@ -131,8 +136,8 @@ def t2f_kep(t:float, e:float, h:float, mu:float)->float:
 
 def f2t_kep(f:float, e:float, h:float, mu:float)->float:
     '''true anomaly to time, using kepler's method'''
-    if e > 1 and abs(f) > finf(e): raise ArithmeticError(
-        f"Invalid true anomaly for hyperbolic orbit. {abs(f)} > {finf(e)}"
+    if e > 1 and abs(f) > elem.finf(e): raise ArithmeticError(
+        f"Invalid true anomaly for hyperbolic orbit. {abs(f)} > {elem.finf(e)}"
     )
     E = f2E(f,e)
     M = E2M(E,e)
@@ -154,11 +159,11 @@ def L2t(L:float, e:float, h:float, mu:float, raan:float, argp:float)->float:
 
 def M2L(M:float,raan:float,argp:float)->float:
     '''mean anomaly to mean longitude'''
-    return longp(raan, argp) + M
+    return elem.longp(raan, argp) + M
 
 def L2M(L:float,raan:float,argp:float)->float:
     '''mean longitude to mean anomaly'''
-    return L-longp(raan,argp) 
+    return L-elem.longp(raan,argp) 
 
 # === universal variables ===
 
@@ -168,8 +173,8 @@ def t2X(t:float, e:float, h:float, mu:float)->float:
     if t==0: return 0.0 # by definition
     # e==0 might have issues as well. test and check
 
-    a = h2a(h,e,mu)
-    rp = pe(a,e)
+    a = elem.h2a(h,e,mu)
+    rp = elem.pe(a,e)
     S = stumpff_s
     C = stumpff_c
     root_mu = m.sqrt(mu)
@@ -193,8 +198,8 @@ def X2t(X:float, e:float, h:float, mu:float)->float:
     if X==0: return 0.0 # by definition
     # e==0 might have issues as well. test and check
 
-    a = h2a(h,e,mu)
-    rp = pe(a,e)
+    a = elem.h2a(h,e,mu)
+    rp = elem.pe(a,e)
     S = stumpff_s
     return (
         (1 - rp*a)*X**3 * S(a*X**2) + rp*X
@@ -221,8 +226,8 @@ def f2X(f:float, e:float, h:float, mu:float)->float:
 
 def f2t(f:float, e:float, h:float, mu:float)->float:
     '''true anomaly to time using universal variable method'''
-    if e > 1 and abs(f) > finf(e): raise ArithmeticError(
-        f"Invalid true anomaly for hyperbolic orbit. {abs(f)} > {finf(e)}"
+    if e > 1 and abs(f) > elem.finf(e): raise ArithmeticError(
+        f"Invalid true anomaly for hyperbolic orbit. {abs(f)} > {elem.finf(e)}"
     )
     X = f2X(f,e,h,mu)
     return X2t(X,e,h,mu)

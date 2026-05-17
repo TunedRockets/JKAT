@@ -160,9 +160,55 @@ class Orbit():
         return ap(self.a, self.e)
     
     @property
+    def apoapsis(self)->float:
+        '''apoapsis, alias of self.ap'''
+        return self.ap
+    
+    @property
     def pe(self)->float:
         '''periapsis'''
         return pe(self.a, self.e)
+    
+    @property
+    def periapsis(self)->float:
+        '''periapsis, alias of self.pe'''
+        return self.pe
+    
+    @ap.setter
+    def ap(self,ap:float):
+        self.set_apses(ap=ap)
+
+    @pe.setter
+    def pe(self,pe:float):
+        self.set_apses(pe=pe)
+    
+    def set_apses(self, ap:float|None=None, pe:float|None=None):
+        '''set new apses, one apsis may be omitted to keep the current value,
+        if ap is smaller than pe, the argument of periapsis is flipped'''
+        if ap is None: ap = self.ap
+        if pe is None: pe = self.pe
+
+        if ap < pe:
+            ap,pe = pe,ap
+            self.argp -=m.pi
+
+        if m.isfinite(ap):
+            a,e = apse2ae(ap,pe)
+            self.a = a; self.e = e
+            if e == 0: self.argp=0
+        else: # keep e if beyond 1, otherwise set e==1:
+            if self.e < 1: self.e = 1
+            p = pe2p(pe,self.e)
+            self.p = p
+    
+    def cross_radius(self,r:float)->float:
+        '''return the positive true anomaly where orbit crosses the altitude.
+        returns NaN if orbit does not cross altitude'''
+        return r2f(r, self.p, self.e)
+
+
+
+
     
     # === hyperbolic values ==== TODO: add aliases
 
@@ -232,6 +278,10 @@ class Orbit():
     def T(self)->float:
         '''period of the orbit'''
         return a2T(self.a,self.mu)
+    
+    @T.setter
+    def T(self, T)->None:
+        self.a = T2a(T,self.mu)
     
     @property
     def period(self)->float:

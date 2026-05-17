@@ -45,6 +45,8 @@ __all__ = [
     'ap',
     'pe',
     'apse2ae',
+    'pe2p',
+    'r2f',
     'longp',
     'arglat',
     'l',
@@ -103,6 +105,18 @@ def pe(a:float,e:float)->float:
 def apse2ae(ap:float, pe:float)->tuple[float,float]:
     '''semi-major axis and eccentricity from apsides'''
     return 0.5*(ap+pe), abs(ap-pe)/(ap+pe)
+
+def pe2p(pe:float, e:float)->float:
+    '''periapsis and eccentricity to parameter
+    (supports hyperbolic orbits)'''
+    return pe*(1+e)
+
+def r2f(r:float, p:float, e:float)->float:
+    '''return true anomaly that results in given radius.
+    returns nan if radius is impossible'''
+    try: return m.acos((p/r - 1)/e)
+    except ValueError: return m.nan
+
 
 # === polar equation derivatives ===
 

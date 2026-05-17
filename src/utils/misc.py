@@ -8,7 +8,9 @@ import numpy as np
 __all__ = [
     "stumpff_s",
     "stumpff_c",
-    "unit"
+    "unit",
+    'elazr2vec',
+    'vec2elazr'
 ]
 
 
@@ -56,3 +58,16 @@ def stumpff_c(z:float)->float:
 def unit(x:np.ndarray)->np.ndarray:
     '''creates a normal vector'''
     return x/np.linalg.norm(x)
+
+def elazr2vec(el:float, az:float, r:float)->np.ndarray:
+    '''elevation, azimuth, and range to a vector'''
+    return np.array([np.cos(el) * np.cos(az),
+        np.cos(el) * np.sin(az),
+        np.sin(el)])*r
+
+def vec2elazr(rvec:np.ndarray)->tuple[float,float,float]:
+    '''vector to elevation, azimuth, and range'''
+    Az = np.arctan2(rvec[1], rvec[0])
+    El = np.pi/2 - np.arctan2(np.sqrt(rvec[0]*rvec[0] + rvec[1]*rvec[1]),rvec[2])
+    z = float(np.linalg.norm(rvec))
+    return El, Az, z
