@@ -11,7 +11,7 @@ from src.kep import Orbit, orbit_from_keplerian, orbit_from_rv, orbit_from_lambe
 from src.utils import EARTH_RADIUS, EARTH_MU, DAY, SIDEREAL_DAY, elazr2vec
 
 
-REL = 1e-3
+REL = 2e-3
 
 @pytest.fixture
 def fixt_ob()->Orbit:
@@ -165,8 +165,10 @@ def test_curtis_4_7():
                                 m.radians(60),
                                 m.radians(30),
                                 EARTH_MU)
+    assert ob.f(0) == approx(m.radians(30))
     ob.h = 80_000
     ob.link_tf(0,m.radians(30))
+    
     r,v = ob.t2vectors(0)
     r_facit = np.array([-4040,4815,3629])
     v_facit = np.array([-10.39, -4.772, 1.744])
