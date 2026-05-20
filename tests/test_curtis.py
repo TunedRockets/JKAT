@@ -8,7 +8,8 @@ import math as m
 import numpy as np
 
 from src.kep import Orbit, orbit_from_keplerian, orbit_from_rv, orbit_from_lambert
-from src.utils import EARTH_RADIUS, EARTH_MU, DAY, SIDEREAL_DAY, elazr2vec
+from src.utils import EARTH_RADIUS, EARTH_MU, DAY, SIDEREAL_DAY, elazr2vec, \
+    f2r, r2f, h2p, apse2ae, a2T
 
 
 REL = 2e-3
@@ -34,7 +35,29 @@ def test_curtis_2_7(fixt_ob:Orbit):
     assert ob.period == approx(2.196*(60*60), rel=REL)
 
 def test_curtis_2_8():
-    raise NotImplementedError
+    z1 = 1545
+    f1 = m.radians(126)
+    z2 = 852
+    f2 = m.radians(58)
+    z1 += 6378
+    z2 += 6378 # earth radius used by Curtis
+    mu = EARTH_MU
+    e = 0.08164 # manually given since we can't solve non-linear equations
+    h = 54_830
+    # ensure it works:
+    p = h2p(h, mu)
+    assert r2f(z1,p,e) == approx(f1, rel=REL)
+    assert f2r(f2, p,e) == approx(z2, rel=REL)
+
+    # and the other answers:
+    zp = f2r(0,p,e)
+    za = f2r(m.pi,p,e)
+    assert zp - 6378 == approx(595.5, rel=REL)
+    a,_ = apse2ae(za,zp)
+    assert a == approx(7593, rel=REL)
+    T = a2T(a,mu)
+    assert T == approx(6585,rel=REL)
+    
 
 def test_curtis_2_9(fixt_ob:Orbit):
     ob = fixt_ob
@@ -168,6 +191,7 @@ def test_curtis_4_7():
     assert ob.f(0) == approx(m.radians(30))
     ob.h = 80_000
     ob.link_tf(0,m.radians(30))
+    assert ob.f(0) == approx(m.radians(30))
     
     r,v = ob.t2vectors(0)
     r_facit = np.array([-4040,4815,3629])
@@ -187,8 +211,9 @@ def test_curtis_5_2():
     assert ob.argp == approx(np.radians(30.71), rel=REL)
     assert ob.i == approx(np.radians(30.19), rel=REL)
     assert ob.r(0) == approx(4952+6378, rel=REL)
-    assert ob.tp == approx(256.1, rel=REL)
     assert ob.f(0) == approx(np.radians(350.8), rel=REL)
+    assert ob.tp % ob.T == approx(256.1, rel=REL)
+    
 
     
 def test_curtis_5_3():

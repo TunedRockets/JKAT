@@ -273,7 +273,7 @@ class Orbit():
     def t(self,f:float=0, after_periapsis:bool=False)->float:
         '''time at given true anomaly, either from epoch (default) or periapsis.'''
         t = f2t(f,self.e,self.h,self.mu)
-        if after_periapsis: t += self.tp
+        if not after_periapsis: t += self.tp
         return t
 
     @property
