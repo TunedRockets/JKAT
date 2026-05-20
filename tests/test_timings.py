@@ -5,6 +5,7 @@ test all the time conversions
 
 from src.utils.anomalies import *
 from src.utils import EARTH_RADIUS, EARTH_MU, a2T, h2a, finf
+from src.kep import Orbit, orbit_from_keplerian
 import math as m
 import numpy as np
 
@@ -89,3 +90,24 @@ def test_uni_round_trip_hyper():
                 assert f == approx(f2, rel=REL)
                 assert t == approx(t2, rel=REL)
             except ArithmeticError: continue
+
+
+def test_orbit_tp():
+    ob = Orbit(EARTH_RADIUS,0.2,0,0,0,0,EARTH_MU)
+    tps = [0, -200, -5000, 200, 5000]
+    for tp in tps:
+        ob.tp = tp
+        f = ob.f(tp)
+        assert f == approx(0)
+
+def test_orbit_angle():
+    for f in np.linspace(0,2*m.pi, endpoint=False):
+        ob = orbit_from_keplerian(EARTH_RADIUS,0.3,0,0,0,f,EARTH_MU)
+        assert ob.f(0) == approx(f)
+
+def test_orbit_period():
+    for f in np.linspace(0,2*m.pi, endpoint=False):
+        ob = orbit_from_keplerian(EARTH_RADIUS,0.3,0,0,0,f,EARTH_MU)
+        for i in np.arange(-5,5):
+            assert ob.f(ob.T*i) == approx(f) or ob.f(ob.T*i)- 2*m.pi == approx(f)
+
