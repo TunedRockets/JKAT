@@ -99,7 +99,7 @@ def E2M(E:float, e:float)->float:
     elif e < 1:
         return E - e*m.sin(E)
     else:
-        return E - e*m.sinh(E) - E
+        return e*m.sinh(E) - E
     
 def f2E(f:float, e:float)->float:
     '''true anomaly to eccentric anomaly'''
@@ -134,7 +134,7 @@ def t2M(t:float, e:float, h:float, mu:float)->float:
 
 def t2f_kep(t:float, e:float, h:float, mu:float)->float:
     '''time to true anomaly, using kepler's method'''
-    M = t2M(t,h,e,mu)
+    M = t2M(t,e,h,mu)
     E = M2E(M,e)
     f = E2f(E,e)
     return f
@@ -147,7 +147,7 @@ def f2t_kep(f:float, e:float, h:float, mu:float)->float:
     )
     E = f2E(f,e)
     M = E2M(E,e)
-    t = M2t(M,h,e,mu)
+    t = M2t(M,e,h,mu)
     return t
 
 
@@ -155,13 +155,13 @@ def f2t_kep(f:float, e:float, h:float, mu:float)->float:
 
 def t2L(t:float, e:float, h:float, mu:float, raan:float, argp:float)->float:
     '''time to mean longitude'''
-    M = t2M(t,h,e,mu)
+    M = t2M(t,e,h,mu)
     return M2L(M,raan,argp)
 
 def L2t(L:float, e:float, h:float, mu:float, raan:float, argp:float)->float:
     '''mean longitude to time'''
     M = L2M(L,raan,argp)
-    return M2t(M,h,e,mu)
+    return M2t(M,e,h,mu)
 
 def M2L(M:float,raan:float,argp:float)->float:
     '''mean anomaly to mean longitude'''
@@ -180,7 +180,7 @@ def t2X(t:float, e:float, h:float, mu:float)->float:
     # e==0 might have issues as well. test and check
 
     a = elem.h2a(h,e,mu)
-    rp = elem.h2pe(e,h,mu)
+    rp = elem.h2pe(h,e,mu)
     S = stumpff_s
     C = stumpff_c
     root_mu = m.sqrt(mu)
@@ -193,7 +193,9 @@ def t2X(t:float, e:float, h:float, mu:float)->float:
     X_max = root_mu*t/rp # min max based on prussing and conway
     X_min = root_mu*t/(h*h/(mu*(1-e))) if e < 1 else 0.0
     if X_max < X_min: X_min,X_max = X_max,X_min # swap if wrong signs
-    X = root_finder_fallback(F,dF,X_min,X_max)
+
+    if X_max - X_min < 1e-10: X = X_max # fix edge case where region is tiny (e~=0)
+    else: X = root_finder_fallback(F,dF,X_min,X_max)
     return X
     
 
@@ -205,7 +207,7 @@ def X2t(X:float, e:float, h:float, mu:float)->float:
     # e==0 might have issues as well. test and check
 
     a = elem.h2a(h,e,mu)
-    rp = elem.a2pe(a,e)
+    rp = elem.h2pe(h,e,mu)
     S = stumpff_s
     return (
         (1 - rp/a)*X**3 * S(X**2/a) + rp*X

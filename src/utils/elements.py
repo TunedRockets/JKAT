@@ -104,11 +104,11 @@ def a2pe(a:float,e:float)->float:
     '''periapsis'''
     return a*(1-e)
 
-def h2ap(e:float, h:float, mu:float):
+def h2ap(h:float,e:float, mu:float):
     '''angular momentum to apoapsis'''
     return (h**2/mu) / (1-e)
 
-def h2pe(e:float, h:float, mu:float):
+def h2pe(h:float,e:float, mu:float):
     '''angular momentum to periapsis'''
     return (h**2/mu) / (1+e)
 
