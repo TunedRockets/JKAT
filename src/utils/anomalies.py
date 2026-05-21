@@ -32,6 +32,7 @@ from .misc import stumpff_c, stumpff_s
 __all__ = [
     'a2T',
     'T2a',
+    'p2char',
     "h2n",
     "M2E",
     "E2M",
@@ -69,6 +70,15 @@ def a2T(a:float, mu:float)->float:
 def T2a(T:float, mu:float)->float:
     '''period to semi major axis'''
     return m.cbrt(mu * (T/(2*m.pi))**2)
+
+def p2char(p:float,e:float, mu:float)->float:
+    '''representative time span of an orbit, for elliptical orbits it's the period,
+    for hyperbolic orbits, it's the time between +-pi/2 true anomaly'''
+    if e < 1: return a2T(elem.p2a(p,e),mu)
+    else:
+        
+
+
 
 def h2n(h:float, e:float, mu:float)->float:
     '''angular momentum to mean motion'''

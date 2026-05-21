@@ -226,3 +226,16 @@ def test_curtis_5_3():
     assert p_alt == approx(160.2+6378, rel=REL)
     assert t_p2 == approx(38_396, rel=REL)
 
+def test_curtis_6_1(self):
+        # using trajectory optimizer
+        origin = orbit_from_keplerian(1,0,0,0,0,0,EARTH_MU)
+        origin.set_apses(800+EARTH_RADIUS, 480+EARTH_RADIUS)
+        destination = orbit_from_keplerian(1,0,0,0,0,0,EARTH_MU)
+        destination.a = (16_000+EARTH_RADIUS)
+
+        raise NotImplementedError()
+
+
+        dv1,dv2,_,_,_ = trajectory_optimizer(origin,destination,(0,destination.period,0,destination.period),1,1)
+        assert within_1_percent(dv1, 1.7225)
+        assert within_1_percent(dv2, 1.3297)

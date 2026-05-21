@@ -245,6 +245,11 @@ class Orbit():
         return aiming_radius(self.p,self.e)
 
 
+    @property
+    def canonical_time_period(self)->float:
+        '''representative time span of an orbit, for elliptical orbits it's the period,
+        for hyperbolic orbits, it's the time between +-pi/2 true anomaly'''
+        return p2char(self.p,self.e,self.mu)
 
 
 
