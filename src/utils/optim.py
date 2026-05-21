@@ -1,15 +1,19 @@
 ''' 
-mathematical optimizers
+mathematical optimizers,
+
+also a place to defer to scipy when relevant
 '''
-from typing import Callable
+from typing import Callable, Sequence
 import numpy as np
 import math as m
+import scipy.optimize as o
 
 # for star importing:
 __all__ = [
     "root_finder_bisection",
     "root_finder_newton",
     "root_finder_fallback",
+    'bboptim'
 ]
 
 
@@ -83,3 +87,8 @@ def root_finder_fallback(f:Callable[[float],float],
     except ArithmeticError:
         x0 = root_finder_bisection(f,lower,upper,precision)
     return x0
+
+def bboptim(f:Callable[[np.ndarray],float], x0:np.ndarray, bounds:Sequence[tuple[float,float]], **kwargs):
+    '''wrapper for optimization black box algorithms'''
+
+    o.shgo(...)

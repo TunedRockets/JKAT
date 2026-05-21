@@ -75,7 +75,7 @@ def p2char(p:float,e:float, mu:float)->float:
     '''representative time span of an orbit, for elliptical orbits it's the period,
     for hyperbolic orbits, it's the time between +-pi/2 true anomaly'''
     if e < 1: return a2T(elem.p2a(p,e),mu)
-    else:
+    else: return 2 * f2t_kep(m.pi/2,e,elem.p2a(p,e),mu)
         
 
 

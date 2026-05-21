@@ -6,6 +6,7 @@ import math as m
 import numpy as np
 from ..utils import *
 
+
 __all__ = [
     'direct_transfer'
 ]
@@ -34,10 +35,20 @@ def direct_transfer(
     kwargs.setdefault('dv2_max', m.inf)
     kwargs.setdefault('dv2_weight', 1) # rendezvous dV (rendezvous by default)
 
+    default_max__time = max(origin.canonical_time_period, destination.canonical_time_period)
     kwargs.setdefault('ts_min',0)
-    default_max_start_time = max(origin.canonical_time_period)
-    kwargs.setdefault('ts_max', max(origin.T,destination.T))
+    kwargs.setdefault('ts_max', default_max__time)
+    kwargs.setdefault('ts_w', 0)
+    kwargs.setdefault('te_min',0)
+    kwargs.setdefault('te_max', default_max__time)
+    kwargs.setdefault('te_w', 0)
+    kwargs.setdefault('tt_min',0)
+    kwargs.setdefault('tt_max', default_max__time)
+    kwargs.setdefault('tt_w', 0)
 
+    kwargs.setdefault('r_min',0)
+    kwargs.setdefault('r_max', m.inf)
+    kwargs.setdefault('r_w', 0)
         
 
 
@@ -48,110 +59,71 @@ def direct_transfer(
 
 
     # first define optimizer function:
-    def F(s:float,t:float)->float: # start + travel time
-        if not (start_bounds[0]<s < start_bounds[1]): return m.inf
-        if not (end_bounds[0] < s + t < end_bounds[1]): return m.inf # ensure we're not outside bounds
+    def F(st:np.ndarray)->float: # start + travel time
+        s = st[0]; t = st[1]
+        # time exclusions:
+        if not (kwargs['ts_min'] < s < kwargs['ts_max']): return m.inf
+        if not (kwargs['tt_min'] < t < kwargs['tt_max']): return m.inf
+        if not (kwargs['te_min'] < s + t < kwargs['te_max']): return m.inf # ensure we're not outside bounds
         r1,v1 = origin.t2vectors(s)
         r2,v2 = destination.t2vectors(s+t)
         try:
             vl1,vl2 = lambert(r1,r2,t,origin.mu)
         except (ArithmeticError, ValueError): return m.inf # trajectories doesn't work
 
-        # exclude maximums:
-        if np.linalg.norm(vl1-v1) > max_insertion: return m.inf
-        if np.linalg.norm(vl2-v2) > max_relv: return m.inf
-        if np.linalg.norm(r2)/AU > max_intercept_distance: return m.inf
+        
+        dv1 = np.linalg.norm(vl1-v1)
+        dv2 = np.linalg.norm(vl2-v2)
+        r = np.linalg.norm(r2)/AU
 
-        weight = float(
-            np.linalg.norm(vl1-v1) * w_insertion +
-            np.linalg.norm(vl2-v2) * w_relv + 
-            t/DAY * w_travel_time +
-            np.linalg.norm(r2)/AU * w_intercept_distance +
-            (s+t)/DAY * w_intercept_time
+        # result exclusions:
+        if not (kwargs['dv1_min'] < dv1 < kwargs['dv1_max']): return m.inf
+        if not (kwargs['dv2_min'] < dv2 < kwargs['dv2_max']): return m.inf
+        if not (kwargs['r_min'] < r < kwargs['r_max']): return m.inf
+
+
+        weight = (
+            s*kwargs['ts_w'] +
+            t*kwargs['tt_w'] +
+            (s+t)*kwargs['te_w'] +
+            dv1*kwargs['dv1_w'] +
+            dv2*kwargs['dv2_w'] +
+            r*kwargs['r_w']
         )
         return weight
     
-    low_time = min(time_bounds)
-    high_time = max(time_bounds)
-
-    dts = (time_bounds[1] - time_bounds[0])/10
-    dte = (time_bounds[3] - time_bounds[2])/10
-    dt = (0.5*(dte+dts))
-
-    pois = _times_of_interest(origin,destination,low_time,high_time)
-    extremes = np.array([ # to fill out in case pois is empty (slightly inside the bounds)
-        [time_bounds[0]+dts, time_bounds[2]+dte],
-        [time_bounds[1]-dts, time_bounds[2]+dte],
-        [time_bounds[1]-dts, time_bounds[3]-dte],
-        [time_bounds[0]+dts, time_bounds[3]-dte],
-        [time_bounds[0], time_bounds[2]+dte], # extra layer for when bounds are same
-        [time_bounds[1]-dts, time_bounds[3]-dte],
-        [time_bounds[0], time_bounds[3]-dte],
-    ])
-    pois = np.vstack((pois, extremes))
-
-    # exclude based on bounds:
-    pois = pois[pois[:,0] > time_bounds[0]]
-    pois = pois[pois[:,0] < time_bounds[1]]
-    pois = pois[pois[:,1] > time_bounds[2]]
-    pois = pois[pois[:,1] < time_bounds[3]]
-
-
-    # exclude times based on max:
-    pois = pois[pois[:,1] < max_intercept_time]
-
-    pois[:,1] -= pois[:,0] # make travel time
-
-    # exclude times based on max:
-    pois = pois[pois[:,1] < max_travel_time]
-
     
-    # pick best of pois:
-    dv_pois = []
-    for poi in pois:
-        try:
-            dv = F(poi[0], poi[1])
-        except (ArithmeticError, ValueError): 
-            dv = m.inf
-        dv_pois.append(dv)
-    idx = np.argsort(dv_pois)
-    dv_pois = np.array(dv_pois)[idx]
-    pois = pois[idx]
-    best = pois[0:5] if len(pois) >= 5 else pois
-    dv_best = dv_pois[0:5] if len(dv_pois) >= 5 else dv_pois
-
-
-    # prestudy those close to optimal:
-    best = best[dv_best < dv_best[0]*1.5]
-    bestopt = [simple_hill_descent_2d(F,x, dt/4, 10) for x in best]
-    bof = []
-    for bo in bestopt:
-        bof.append(F(bo[0],bo[1]))
-    idx = np.argsort(bof)
-    bestopt = np.array(bestopt)[idx]
-
-    # try the best:
-    for p in bestopt:
-        try:
-            s_opt,t_opt = nelder_mead_2d(F,p,-dt/2, 1e-6, max_iter=1000) #type:ignore
-            break # found one
-        except (ValueError, ArithmeticError):
-            # this one didn't work
-            continue
-    else:
-        raise ArithmeticError("no trajectory could be found")
+    # # get points?
+    # points = _pois(origin,destination,kwargs['ts_min'],kwargs['te_max'])
+    # # try the best:
+    # for p in best:
+    #     try:
+    #         s_opt,t_opt = nelder_mead_2d(F,p,-dt/2, 1e-6, max_iter=1000) #type:ignore
+    #         break # found one
+    #     except (ValueError, ArithmeticError):
+    #         # this one didn't work
+    #         continue
+    # else:
+    #     raise ArithmeticError("no trajectory could be found")
+    bounds = [(kwargs['ts_min'],kwargs['ts_max']),
+                (kwargs['ts_min'],kwargs['ts_max'])]
+    s_opt, t_opt = bboptim(F,
+                           np.array([np.average(bounds[0]),np.average(bounds[1])]),
+                           bounds,) # type:ignore
+    
 
     # compute properties:
-    r1,v1 = origin.time_to_rv(s_opt)
-    r2,v2 = destination.time_to_rv(s_opt+t_opt)
-    vl1,vl2 = lambert_vectors(r1,r2,t_opt,origin.sgp)
+    r1,v1 = origin.t2vectors(s_opt)
+    r2,v2 = destination.t2vectors(s_opt+t_opt)
+    vl1,vl2 = lambert(r1,r2,t_opt,origin.mu)
     return np.linalg.norm(vl1-v1), np.linalg.norm(vl2-v2), s_opt, s_opt+t_opt, np.linalg.norm(r2) # type: ignore
 
 
 
 
-def _times_of_interest(origin:Orbit, destination:Orbit, lower_time:float, upper_time:float)->np.ndarray:
+def _pois(origin:Orbit, destination:Orbit, lower_time:float, upper_time:float)->np.ndarray:
     '''helper functions to generate times of interest for the trajectory optimizer'''
+    raise NotImplementedError()
 
     # apses and nodes
     ori_cross = origin.relative_node_crossing(destination)
