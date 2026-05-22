@@ -35,6 +35,8 @@ numpy is trivial
 '''
 from .anomalies import *
 import math as m
+import numpy as np
+from typing import overload
 
 __all__ = [
     'h2p',
@@ -130,9 +132,14 @@ def r2f(r:float, p:float, e:float)->float:
 
 # === polar equation derivatives ===
 
-def f2r(f:float, p:float, e:float)->float:
+@overload
+def f2r(f:np.ndarray, p:float, e:float)->np.ndarray:...
+@overload
+def f2r(f:float, p:float, e:float)->float:...
+
+def f2r(f:float|np.ndarray, p:float, e:float)->float|np.ndarray:
     '''polar equation radius'''
-    return p/(1+e*m.cos(f))
+    return p/(1+e*np.cos(f))
 
 def f2vt(f:float, p:float, e:float, h:float)->float:
     '''tangential velocity'''

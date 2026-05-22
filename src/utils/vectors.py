@@ -8,6 +8,7 @@ see `elements.py` for list of relevant variables
 
 import math as m
 import numpy as np
+from typing import overload
 
 from .elements import finf, f2r
 
@@ -44,7 +45,8 @@ def Q_basis(raan:float, i:float, argp:float)->np.ndarray:
     ])
     return Q
 
-def kep2rvec(f:float,
+
+def kep2rvec(f:float|np.ndarray,
              p:float,
              e:float,
              i:float,
@@ -52,15 +54,21 @@ def kep2rvec(f:float,
              argp:float)->np.ndarray:
     '''position vector in inertial frame'''
 
-
-    # check invalid angles:
-    if e > 1 and abs(f) > finf(e): raise ArithmeticError(
-        f"Invalid true anomaly for hyperbolic orbit. {abs(f)} > {finf(e)}"
-    )
-
-    rvec = f2r(f,p,e) * np.array([m.cos(f), m.sin(f), 0]) # rvec in pqw
-    rvec = Q_basis(raan,i,argp)@rvec
-    return rvec
+    if isinstance(f,np.ndarray):
+        # truncate invalid angles:
+        if e > 1: f = np.maximum(np.minimum(f, finf(e)),-finf(e))
+        rr = f2r(f,p,e)
+        rr = np.vstack([rr*np.cos(f), rr*np.sin(f), np.zeros_like(f)])
+        rr = Q_basis(raan,i,argp)@rr
+        return rr.T
+    else:
+        # check invalid angles:
+        if e > 1 and abs(f) > finf(e): raise ArithmeticError(
+            f"Invalid true anomaly for hyperbolic orbit. {abs(f)} > {finf(e)}"
+        )
+        rvec = f2r(f,p,e) * np.array([m.cos(f), m.sin(f), 0]) # rvec in pqw
+        rvec = Q_basis(raan,i,argp)@rvec
+        return rvec
 
 def kep2vvec(f:float,
              p:float,

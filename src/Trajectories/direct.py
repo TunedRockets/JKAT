@@ -1,5 +1,6 @@
 ''' 
 Direct transfer from one orbit to another
+TODO!!! inprecise and bad
 '''
 from ..kep import Orbit, lambert
 import math as m
@@ -50,14 +51,6 @@ def direct_transfer(
     kwargs.setdefault('r_max', m.inf)
     kwargs.setdefault('r_w', 0)
         
-
-
-
-
-
-
-
-
     # first define optimizer function:
     def F(st:np.ndarray)->float: # start + travel time
         s = st[0]; t = st[1]
@@ -107,9 +100,10 @@ def direct_transfer(
     #     raise ArithmeticError("no trajectory could be found")
     bounds = [(kwargs['ts_min'],kwargs['ts_max']),
                 (kwargs['ts_min'],kwargs['ts_max'])]
-    s_opt, t_opt = bboptim(F,
-                           np.array([np.average(bounds[0]),np.average(bounds[1])]),
-                           bounds,) # type:ignore
+    opts = bb_glob_optim(F, bounds,)
+    
+    s_opt = opts[0][0]
+    t_opt = opts[0][1]
     
 
     # compute properties:

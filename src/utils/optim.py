@@ -13,7 +13,7 @@ __all__ = [
     "root_finder_bisection",
     "root_finder_newton",
     "root_finder_fallback",
-    'bboptim'
+    'bb_glob_optim'
 ]
 
 
@@ -88,7 +88,8 @@ def root_finder_fallback(f:Callable[[float],float],
         x0 = root_finder_bisection(f,lower,upper,precision)
     return x0
 
-def bboptim(f:Callable[[np.ndarray],float], x0:np.ndarray, bounds:Sequence[tuple[float,float]], **kwargs):
-    '''wrapper for optimization black box algorithms'''
+def bb_glob_optim(f:Callable[[np.ndarray],float], bounds:Sequence[tuple[float,float]], **kwargs):
+    '''wrapper for global optimization black box algorithm, returns list of local optima'''
 
-    o.shgo(...)
+    x = o.shgo(f,bounds,**kwargs, workers=-1)
+    return x.xl

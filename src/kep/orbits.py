@@ -136,7 +136,12 @@ class Orbit():
     
     # === polar equation derivatives ===
 
-    def r(self,f:float)->float:
+    @overload
+    def r(self, f:np.ndarray)->np.ndarray:...
+    @overload
+    def r(self, f:float)->float:...
+
+    def r(self,f:float|np.ndarray)->float|np.ndarray:
         '''polar equaiton radius'''
         return f2r(f,self.p,self.e)
     
@@ -339,7 +344,7 @@ class Orbit():
 
     # === vectors ===
 
-    def rvec(self, f:float)->np.ndarray:
+    def rvec(self, f:float|np.ndarray)->np.ndarray:
         '''position vector at given true anomaly'''
         return kep2rvec(f,self.p,self.e,self.i,self.raan,self.argp)
     
@@ -372,3 +377,25 @@ class Orbit():
     def Q_basis(self)->np.ndarray:
         '''Perifocal frame basis'''
         return Q_basis(self.raan,self.i,self.argp)
+    
+
+# === helpers ====
+
+    def point_locus(self, f_start:float = 0, f_end:float = (2*m.pi), num:int=100):
+        '''get a locus of points in 3d space'''
+
+        # limit angle:
+        if self.e > 1:
+            f_start = max(f_start, -self.finf+1e-6)
+            f_end = min(f_end, self.finf-1e-6)
+        
+        Q = self.Q_basis
+
+        ff = np.linspace(f_start,f_end,num)
+
+        rr = self.r(ff)
+        rr = np.vstack([rr*np.cos(ff), rr*np.sin(ff), np.zeros_like(ff)])
+        
+        rr = Q@rr
+        return rr.T
+        
