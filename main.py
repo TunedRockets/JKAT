@@ -3,16 +3,18 @@
 
 from src.utils import *
 from src.kep import *
+from src.ephemeris import *
 import src.plotting as oplt
 import matplotlib.pyplot as plt
 import numpy as np
 from tests.test_timings import test_uni_round_trip_hyper
 from tests.test_curtis import test_curtis_4_7
+from pprint import pprint
 
 
 
-ob = Orbit(100,0.2,0.1,0.3,0.5,200,1000)
-oplt.plot(ob, f=0)
-oplt.center()
-plt.axis('scaled')
+pprint(JPL_ephemeris)
+
+oplt.add_solar_system(planets='11110000', initials=True)
 oplt.show()
+
