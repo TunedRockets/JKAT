@@ -16,7 +16,7 @@ JKAT shall be a python package that makes astrodynamical calculations easy. Many
  - [ ] porkchop plot
  - [x] propagate
  - [ ] curtis chapter 6
-       - [ ] hohmann equations
+       - [x] hohmann equations
        - [ ] relative synodic periods
  - [x] hyperbolic origin
  - [x] distance to
