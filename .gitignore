@@ -1,3 +1,4 @@
 .JKAT_venv/*
 *.pyc
 .vscode*
+.coverage
