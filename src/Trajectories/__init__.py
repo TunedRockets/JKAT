@@ -1,6 +1,8 @@
 ''' 
-Module for optimizing trajectories 
+Module for creating and optimizing trajectories
 '''
 
 
 from .direct import *
+
+from .simple import *

@@ -1,6 +1,7 @@
 ''' 
 Package for all small calculations and such. functions in here should
-be only mathematical functions/algorithms.
+be only mathematical functions/algorithms, as well as functions
+that do no take or yield orbits. i.e. simple relationships between variables
 '''
 
 # miscellanous, non-astrodynamic functions

@@ -9,7 +9,7 @@ import numpy as np
 
 from src.kep import Orbit, orbit_from_keplerian, orbit_from_rv, orbit_from_lambert
 from src.utils import EARTH_RADIUS, EARTH_MU, DAY, SIDEREAL_DAY, elazr2vec, \
-    f2r, r2f, h2p, apse2ae, a2T
+    f2r, r2f, h2p, apse2ae, a2T, propagate_vectors
 
 
 REL = 2e-3
@@ -166,6 +166,14 @@ def test_curtis_3_7():
     r,v = ob.t2vectors(60*60)
     assert r == approx(np.array([-3296.8,7413.9,0]), rel=REL)
     assert v == approx(np.array([-8.2977,-0.96309,0]), rel=REL)
+
+def test_curtis_3_7_alt():
+    r = np.array([7000,-12_124, 0])
+    v = np.array([2.6679, 4.6210, 0])
+    dt = 60*60
+    r1,v1 = propagate_vectors(r,v,dt,EARTH_MU)
+    assert r1 == approx(np.array([-3296.8,7413.9,0]), rel=REL)
+    assert v1 == approx(np.array([-8.2977,-0.96309,0]), rel=REL)
 
 
 def test_curtis_4_3():

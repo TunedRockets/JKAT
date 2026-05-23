@@ -34,6 +34,8 @@ __all__ = [
     'T2a',
     'p2char',
     "h2n",
+    'T2n',
+    'a2n',
     "M2E",
     "E2M",
     "f2E",
@@ -84,6 +86,14 @@ def h2n(h:float, e:float, mu:float)->float:
     '''angular momentum to mean motion'''
     if e == 1: return mu**2/(h**3)
     else: return mu**2/(h**3) * abs((1-e**2)**(3/2))
+
+def T2n(T:float)->float:
+    '''period to mean motion'''
+    return 2*m.pi/T
+
+def a2n(a:float, mu:float)->float:
+    '''semi-major axis to mean motion'''
+    return T2n(a2T(a,mu))
 
 def M2E(M:float, e:float)->float:
     '''Mean anomaly to eccentric anomaly'''

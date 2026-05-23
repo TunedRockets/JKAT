@@ -66,8 +66,7 @@ __all__ = [
     'c3',
     'finf',
     'turn_angle',
-    'aiming_radius',
-    'hohmann_transfer'
+    'aiming_radius'
 ]
 
 
@@ -206,18 +205,5 @@ def aiming_radius(p:float,e:float)->float:
     else: return (p/(e**2-1))*m.sqrt(e**2 - 1)
 
 
-# === hohmann functions ====
-
-def hohmann_transfer(r1:float, r2:float ,mu:float)->tuple[float, float, float]:
-    '''calculate delta v and travel time for a hohmann transfer,
-    return dv1, dv2, travel time'''
-    # ensure right ordering:
-    
-    dv1 = m.sqrt(mu/r1)*abs(
-        m.sqrt(2*r2/(r1+r2)) - 1)
-    dv2 = m.sqrt(mu/r1)*abs(
-        m.sqrt(2*r1/(r1+r2)) - 1)
-    T = a2T(apse2ae(r1,r2)[0],mu)
-    return dv1,dv2, T/2
 
 

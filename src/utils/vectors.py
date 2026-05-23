@@ -8,9 +8,12 @@ see `elements.py` for list of relevant variables
 
 import math as m
 import numpy as np
+from numpy.linalg import norm
 from typing import overload
 
 from .elements import finf, f2r
+from .misc import stumpff_c, stumpff_s
+from .optim import root_finder_newton
 
 __all__ = [
     'Q_basis',
@@ -18,6 +21,7 @@ __all__ = [
     'kep2vvec',
     'kep2vectors',
     'vectors2kep',
+    'propagate_vectors'
 ]
 
 
@@ -114,10 +118,10 @@ def vectors2kep(rvec:np.ndarray,vvec:np.ndarray,
     :rtype: tuple[float,float,float,float,float,float]'''
 
     hvec = np.cross(rvec,vvec) # angular momentum vector
-    r = np.linalg.norm(rvec) # radius
-    h = np.linalg.norm(hvec) # angular momentum
+    r = norm(rvec) # radius
+    h = norm(hvec) # angular momentum
     evec = np.cross(vvec,hvec)/mu - rvec/r # eccentricity vector
-    e:float = np.linalg.norm(evec) # type:ignore
+    e:float = norm(evec) # type:ignore
     p = hvec.dot(hvec)/mu # parameter
     vr = rvec.dot(vvec)/r # radial velocity
     k = np.array([0,0,1]) # "up" vector
@@ -126,10 +130,10 @@ def vectors2kep(rvec:np.ndarray,vvec:np.ndarray,
     # normal calculations:
     i = m.acos(hvec[2]/h) # inclination
 
-    raan = m.acos(nvec[0]/np.linalg.norm(nvec)) # RAAN
+    raan = m.acos(nvec[0]/norm(nvec)) # RAAN
     if nvec[1] < 0: raan = 2*m.pi - raan # angle is negative (but we want to keep it in range 0-2pi)
     
-    argp = m.acos(nvec.dot(evec)/(np.linalg.norm(nvec)*e)) # argument of periapsis
+    argp = m.acos(nvec.dot(evec)/(norm(nvec)*e)) # argument of periapsis
     if evec[2] < 0: argp = 2*m.pi - argp
 
     f = m.acos(evec.dot(rvec)/(e*r)) # true anomaly
@@ -144,7 +148,7 @@ def vectors2kep(rvec:np.ndarray,vvec:np.ndarray,
     elif e == 0 and i != 0: # circular inclined
         
         argp = 0 # "periapsis" on node
-        f = m.acos(nvec.dot(rvec)/(r*np.linalg.norm(nvec)))
+        f = m.acos(nvec.dot(rvec)/(r*norm(nvec)))
         if rvec[2] < 0: f = 2*m.pi - f
     elif e==0 and i== 0: # circular equatorial
         # node and periapsis on x axis
@@ -154,3 +158,41 @@ def vectors2kep(rvec:np.ndarray,vvec:np.ndarray,
         if rvec[1]<0: f = 2*m.pi - f
 
     return p,e,i,raan,argp,f
+
+
+def propagate_vectors(rvec:np.ndarray, vvec:np.ndarray, dt:float, mu:float)->tuple[np.ndarray,np.ndarray]:
+    '''
+    Propagate a r and v vector forward in time by dt\n
+    Uses the universal variable method, so does not care about the type of orbit
+    (barring maybe degenerate ones)\n
+    this is essentially equivalent to from_rv().time_to_rv().
+    '''
+
+    # using Curtis' numerical method
+    r = norm(rvec)
+    vr = np.dot(rvec, vvec)/r # initial radial velocity
+
+    alpha = 2/r - vvec.dot(vvec)/mu # inverse semi-major axis
+    # quick almost zero check
+    root_mu = m.sqrt(mu)
+    chi = root_mu*dt*abs(alpha) # good first guess
+    def F(chi): 
+        z = alpha * chi**2
+        return (r*vr/root_mu) * chi**2 * stumpff_c(z) + (1-alpha*r) * chi**3 * stumpff_s(z) + r*chi - root_mu*dt
+    
+    def F_prime(chi):
+        z = alpha * chi**2
+        return (r*vr/root_mu) * chi * (1-alpha*chi**2 * stumpff_s(z)) + (1-alpha*r) * chi**2 * stumpff_c(z) + r
+    
+    chi = root_finder_newton(F, F_prime, chi)
+
+    # lagrange coefficents using chi
+    f = 1 - (chi**2/r)*stumpff_c(chi**2 * alpha)
+    g = dt - 1/root_mu * chi**3 * stumpff_s(chi**2 * alpha)
+    r_1 = f*rvec + g*vvec
+    
+    f_dot = root_mu/(r * norm(r_1)) * (chi**3 * alpha * stumpff_s(chi**2 * alpha) - chi)
+    g_dot = 1 - chi**2/norm(r_1) * stumpff_c(chi**2 * alpha)
+    v_1 = f_dot*rvec + g_dot*vvec
+
+    return r_1, v_1

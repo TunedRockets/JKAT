@@ -10,7 +10,8 @@ __all__ = [
     "stumpff_c",
     "unit",
     'elazr2vec',
-    'vec2elazr'
+    'vec2elazr',
+    'rodrigues_rot'
 ]
 
 
@@ -71,3 +72,12 @@ def vec2elazr(rvec:np.ndarray)->tuple[float,float,float]:
     El = np.pi/2 - np.arctan2(np.sqrt(rvec[0]*rvec[0] + rvec[1]*rvec[1]),rvec[2])
     z = float(np.linalg.norm(rvec))
     return El, Az, z
+
+def rodrigues_rot(v:np.ndarray, pivot:np.ndarray, angle:float)->np.ndarray:
+    '''rotates one vector around another using Rodrigues' formula, follows 
+    right hand rule/CCW convention
+    see also: rot_unit'''
+
+    # normalise pivot:
+    pivot = unit(pivot)
+    return v*np.cos(angle) + (np.cross(pivot,v))*np.sin(angle) + pivot*(pivot.dot(v))*(1-np.cos(angle))

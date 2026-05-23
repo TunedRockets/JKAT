@@ -4,6 +4,7 @@ import math as m
 import numpy as np
 from typing import Never,overload
 from ..utils import * # change to non-star
+from ..Trajectories import *
 __all__ = [
     'Orbit'
 ]
@@ -50,13 +51,7 @@ class Orbit():
     def __repr__(self) -> str: # always need a repr (for debugging at least)
         return f"Orbit:\n {self.p=}\n {self.e=}\n {self.i=}\n {self.raan=}\n {self.argp=}\n {self.tp=}\n {self.mu=}"
     
-# ======================
-# properties
-# ======================
-# implement relevant setters when possible
-
-
-    # === aliases ===
+# === aliases ===
     @property
     def parameter(self)->float:
         '''Alias of self.p'''
@@ -134,7 +129,7 @@ class Orbit():
     
     
     
-    # === polar equation derivatives ===
+# === polar equation derivatives ===
 
     @overload
     def r(self, f:np.ndarray)->np.ndarray:...
@@ -217,7 +212,7 @@ class Orbit():
 
 
     
-    # === hyperbolic values ==== TODO: add aliases
+# === hyperbolic values ==== TODO: add aliases
 
     def vesc(self, f)->float:
         '''escape velocity at given true anomaly'''
@@ -258,7 +253,7 @@ class Orbit():
 
 
 
-    # === timing ===
+# === timing ===
 
     def f(self, t:float = 0, after_periapsis:bool=False)->float:
         '''true anomaly at a given time, either from epoch (default) or periapsis.'''
@@ -342,7 +337,7 @@ class Orbit():
         self.tp = t - t_after
         return self.tp
 
-    # === vectors ===
+# === vectors ===
 
     def rvec(self, f:float|np.ndarray)->np.ndarray:
         '''position vector at given true anomaly'''
@@ -375,9 +370,113 @@ class Orbit():
 
     @property
     def Q_basis(self)->np.ndarray:
-        '''Perifocal frame basis'''
+        '''Perifocal frame basis, i.e. [p,q,w] basis vectors'''
         return Q_basis(self.raan,self.i,self.argp)
+
+    @property
+    def evec(self)->np.ndarray:
+        '''eccentricity vector'''
+        return (self.Q_basis[:,0]*self.e).flatten()
     
+    @property
+    def hvec(self)->np.ndarray:
+        '''angular momentum vector'''
+        return (self.Q_basis[:,2]*self.h).flatten()
+    
+    @property
+    def hyperbolic_origin(self)->np.ndarray:
+        '''unit vector in the direction of the origin of a hyperbolic orbit'''
+        return unit(rodrigues_rot(self.evec,self.hvec,self.finf))
+
+    @property
+    def hyperbolic_destination(self)->np.ndarray:
+        '''unit vector in the direction of the destination of a hyperbolic orbit'''
+        return unit(rodrigues_rot(self.evec,self.hvec,-self.finf))
+
+# === other orbits ===
+
+    def synodic_period(self,other:"Orbit")->float:
+        '''period between when the angle of the two orbiting objects is the same.
+        I.e. the period between launch windows (on circular orbits)
+
+        :param other: other orbit
+        :type other: Orbit
+        :return: synodic period
+        :rtype: float
+        '''
+        if self.e >=1 or other.e >= 1:
+            raise ValueError("hyperbolic orbits do not have synodic periods")
+        return synodic_period(self.T,other.T)
+    
+    def hohmann_angle(self,other:"Orbit")->float:
+        '''calculates the optimal angle the other planets needs to be ahead
+        for optimal hohmann transfer.
+
+        :param other: other orbit
+        :type other: Orbit
+        :return: optimal angle
+        :rtype: float
+        '''
+        if self.e >=1 or other.e >= 1:
+            raise ValueError("hyperbolic orbits do not have hohmann transfers")
+        return hohmann_angle(self.a,other.a,self.mu)
+    
+    def hohmann_time(self,other:"Orbit")->float:
+        '''compute the optimal time for a hohmann transfer,
+        assumes circular orbits so will be incorrect for ellitical orbits.
+        this time repeats every synodic period
+
+        :param other: other orbit
+        :type other: Orbit
+        :return: time of hohmann transfer
+        :rtype: float
+        '''
+        if self.e >=1 or other.e >= 1:
+            raise ValueError("hyperbolic orbits do not have hohmann transfers")
+        
+        # establish base angle:
+        phi_0 = other.f(0) - self.f(0)
+        phi_opt = self.hohmann_angle(other)
+        rel_n = other.n - self.n
+
+        # want to wait to when it goes from phi_0 to phi'
+        # phi = phi_0 + n*t (mod 2pi)
+        t_until = (phi_opt - phi_0)/rel_n
+        return t_until
+
+    def hohmann(self,other:"Orbit")->tuple[float,float,float]:
+        '''hohmann transfer between orbits'''
+        return hohmann_transfer(self.a,other.a,self.mu)
+        
+
+    def plane_crossing(self,other:"Orbit")->float:
+        '''returns the true anomaly where this orbit crosses the other orbit's plane,
+        returns the "ascending node", "descending node" is pi radians opposite this one
+
+        :param other: Other orbit
+        :type other: Orbit
+        :return: true anomaly of relative ascending node
+        :rtype: float
+        '''
+        e = self.evec
+        N = np.cross(self.hvec,other.hvec) # relative node vector
+        theta = m.acos(N.dot(e)/(np.linalg.norm(N) * np.linalg.norm(e))) # anomaly of node vector (i.e. crossing)
+        return theta
+    
+    def distance_to(self,other:"Orbit", time:float)->np.ndarray:
+        '''return vector between two orbits at given time,
+        starting at self, and going to origin
+
+        :param other: orther orbit to compare distance to
+        :type other: Orbit
+        :param time: time at which to measure the range
+        :type time: float
+        :return: vector to the other orbit
+        :rtype: np.ndarray
+        '''
+        return self.t2rvec(time) - other.t2rvec(time)
+
+
 
 # === helpers ====
 

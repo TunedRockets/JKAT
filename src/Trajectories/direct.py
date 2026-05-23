@@ -120,8 +120,8 @@ def _pois(origin:Orbit, destination:Orbit, lower_time:float, upper_time:float)->
     raise NotImplementedError()
 
     # apses and nodes
-    ori_cross = origin.relative_node_crossing(destination)
-    dest_cross = destination.relative_node_crossing(origin)
+    ori_cross = origin.plane_crossing(destination)
+    dest_cross = destination.plane_crossing(origin)
     if origin.e < 1:
         ori_nodes = [0,m.pi, ori_cross, ori_cross + m.pi]
     else:
