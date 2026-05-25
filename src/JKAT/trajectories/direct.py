@@ -1,5 +1,6 @@
 ''' 
-Direct transfer from one orbit to another
+Direct transfer from one orbit to another, as well as the lambert transfer 
+it is based on (move this?)
 TODO!!! inprecise and bad
 '''
 from ..kep import Orbit
@@ -102,8 +103,12 @@ suffix_vars = ['_min','_max','_w']
 def direct_transfer(
         origin:Orbit,
         destination:Orbit,
+        bounds:tuple[float,float,float,float]|None = None,
         **kwargs,
-)->tuple[float,float,float,float,float]:
+)->dict:
+    '''function for calculating the optimal transfer between two orbiting objects,
+    bounds is the search area, **kwargs determine bounds and weights
+    returns dict with: ts,te,dv1,dv2,r'''
     
     
     # set **kwargs defaults
@@ -128,6 +133,13 @@ def direct_transfer(
     kwargs.setdefault('r_min',0)
     kwargs.setdefault('r_max', m.inf)
     kwargs.setdefault('r_w', 0)
+
+    if not bounds is None:
+        kwargs['ts_min'] = bounds[0]
+        kwargs['ts_max'] = bounds[1]
+        kwargs['te_min'] = bounds[2]
+        kwargs['te_min'] = bounds[3]
+    
         
     # first define optimizer function:
     def F(st:np.ndarray)->float: # start + travel time
@@ -164,38 +176,50 @@ def direct_transfer(
         return weight
     
     
-    # # get points?
-    # points = _pois(origin,destination,kwargs['ts_min'],kwargs['te_max'])
-    # # try the best:
-    # for p in best:
-    #     try:
-    #         s_opt,t_opt = nelder_mead_2d(F,p,-dt/2, 1e-6, max_iter=1000) #type:ignore
-    #         break # found one
-    #     except (ValueError, ArithmeticError):
-    #         # this one didn't work
-    #         continue
-    # else:
-    #     raise ArithmeticError("no trajectory could be found")
-    bounds = [(kwargs['ts_min'],kwargs['ts_max']),
-                (kwargs['ts_min'],kwargs['ts_max'])]
-    opts = bb_glob_optim(F, bounds,)
-    
-    s_opt = opts[0][0]
-    t_opt = opts[0][1]
+    # get points?
+    points = _pois(origin,destination,kwargs['ts_min'],kwargs['te_max'])
+
+    Fpoints = []
+    for p in points: Fpoints.append(F(p))
+
+    points = points[np.argsort(Fpoints)]
+
+    dt = (kwargs['te_max'] - kwargs['te_min'])/20 + (kwargs['ts_max'] - kwargs['ts_min'])/20
+    # try the best:
+    for p in points:
+        try:
+            opt = minimizer(F,p,dt) #type:ignore
+            break # found one
+        except (ValueError, ArithmeticError):
+            # this one didn't work
+            continue
+    else:
+        raise ArithmeticError("no trajectory could be found")
+
+    s_opt = opt[0]
+    t_opt = opt[1]
     
 
     # compute properties:
     r1,v1 = origin.t2vectors(s_opt)
     r2,v2 = destination.t2vectors(s_opt+t_opt)
     vl1,vl2 = lambert(r1,r2,t_opt,origin.mu)
-    return np.linalg.norm(vl1-v1), np.linalg.norm(vl2-v2), s_opt, s_opt+t_opt, np.linalg.norm(r2) # type: ignore
+    return {
+        "ts": s_opt,
+        "te": s_opt+t_opt,
+        "dv1": np.linalg.norm(vl1-v1),
+        "dv2": np.linalg.norm(vl2-v2),
+        'r': np.linalg.norm(r2)
+    }
 
 
 
 
 def _pois(origin:Orbit, destination:Orbit, lower_time:float, upper_time:float)->np.ndarray:
-    '''helper functions to generate times of interest for the trajectory optimizer'''
-    raise NotImplementedError()
+    '''helper functions to generate times of interest for the trajectory optimizer,
+    gets all apses, node-crossings, and potential hohmann transfer points'''
+
+    if (upper_time < lower_time): upper_time, lower_time = lower_time, upper_time
 
     # apses and nodes
     ori_cross = origin.plane_crossing(destination)
@@ -204,25 +228,25 @@ def _pois(origin:Orbit, destination:Orbit, lower_time:float, upper_time:float)->
         ori_nodes = [0,m.pi, ori_cross, ori_cross + m.pi]
     else:
         ori_nodes = [0.0]
-        if abs(ori_cross) < origin.asymptote_angle(): ori_nodes.append(ori_cross) 
+        if abs(ori_cross) < origin.finf: ori_nodes.append(ori_cross) 
 
-        if abs(ori_cross - m.pi) < origin.asymptote_angle(): ori_nodes.append(ori_cross - m.pi) 
+        if abs(ori_cross - m.pi) < origin.finf: ori_nodes.append(ori_cross - m.pi) 
 
     if destination.e < 1:
         dest_nodes = [0,m.pi, dest_cross, dest_cross + m.pi]
     else:
         dest_nodes = [0.0]
-        if abs(dest_cross) < destination.asymptote_angle(): dest_nodes.append(dest_cross) 
+        if abs(dest_cross) < destination.finf: dest_nodes.append(dest_cross) 
 
-        if abs(dest_cross - m.pi) < destination.asymptote_angle(): dest_nodes.append(dest_cross - m.pi) 
+        if abs(dest_cross - m.pi) < destination.finf: dest_nodes.append(dest_cross - m.pi) 
     
 
     starts = []
     ends = []
     for n in ori_nodes:
-        starts.extend(inside_modulo_bounds(lower_time, origin.theta_to_time(n), upper_time, origin.period))
+        starts.extend(mod_bounds(lower_time, origin.t(n), upper_time, origin.period))
     for n in dest_nodes:
-        ends.extend(inside_modulo_bounds(lower_time, destination.theta_to_time(n), upper_time, destination.period))
+        ends.extend(mod_bounds(lower_time, destination.t(n), upper_time, destination.period))
 
     pois = np.array(np.meshgrid(starts,ends)).T.reshape(-1,2)
     # mesh of nodes/apses
@@ -230,17 +254,29 @@ def _pois(origin:Orbit, destination:Orbit, lower_time:float, upper_time:float)->
     # hohmann:
     if (origin.e < 1 and destination.e < 1):
 
-        # figure out eccentric hohmann
+        # TODO figure out eccentric hohmann
         # pe->ap, ap->pe, ap->ap, pe->pe ?
+        # values need to be shifted a bit
 
 
 
 
         t = origin.hohmann_time(destination)
-        t = np.array(inside_modulo_bounds(lower_time,t,upper_time, origin.synodic_period(destination)))
-        t2 = t + origin.hohmann_travel_time(destination)
+        t = np.array(mod_bounds(lower_time,t,upper_time, origin.synodic_period(destination)))
+        t2 = t + origin.hohmann(destination)[2]
         poi = np.column_stack((t,t2))
         pois = np.vstack((pois,poi))
+
+    # add edges of range:
+    dt = (upper_time-lower_time)/10
+
+    pois = np.vstack((pois, np.array([ # triangle of valid edge points
+        [lower_time+dt, lower_time+2*dt],
+        [lower_time+dt, upper_time-dt],
+        [upper_time-2*dt, upper_time-dt]
+    ])))
+
+    
     # presort invalids:
     pois = pois[pois[:,1] < upper_time]
     pois = pois[pois[:,0] < pois[:,1]]

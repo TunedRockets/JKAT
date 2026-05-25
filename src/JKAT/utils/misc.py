@@ -11,7 +11,8 @@ __all__ = [
     "unit",
     'elazr2vec',
     'vec2elazr',
-    'rodrigues_rot'
+    'rodrigues_rot',
+    'mod_bounds',
 ]
 
 
@@ -81,3 +82,20 @@ def rodrigues_rot(v:np.ndarray, pivot:np.ndarray, angle:float)->np.ndarray:
     # normalise pivot:
     pivot = unit(pivot)
     return v*np.cos(angle) + (np.cross(pivot,v))*np.sin(angle) + pivot*(pivot.dot(v))*(1-np.cos(angle))
+
+# === other math ===
+
+def mod_bounds(lower:float, value:float, upper:float, modulo:float)->list[float]:
+    '''
+    Will return all values that are a modulo distance from value
+    which are inside the bounds
+    '''
+    
+    # move value below lower:
+    while value-modulo > lower: value -= modulo
+    # go through to add to list
+    l = []
+    while value <= upper:
+        if lower <= value < upper: l.append(value)
+        value += modulo
+    return l

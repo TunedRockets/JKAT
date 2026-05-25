@@ -1,5 +1,6 @@
 ''' 
-mathematical optimizers,
+mathematical optimizers, all put in one place so that they (being computationally heavy)
+can be referred to another package or language if a speedup is needed
 
 also a place to defer to scipy when relevant
 '''
@@ -13,7 +14,7 @@ __all__ = [
     "root_finder_bisection",
     "root_finder_newton",
     "root_finder_fallback",
-    'bb_glob_optim'
+    'minimizer'
 ]
 
 
@@ -88,8 +89,79 @@ def root_finder_fallback(f:Callable[[float],float],
         x0 = root_finder_bisection(f,lower,upper,precision)
     return x0
 
-def bb_glob_optim(f:Callable[[np.ndarray],float], bounds:Sequence[tuple[float,float]], **kwargs):
-    '''wrapper for global optimization black box algorithm, returns list of local optima'''
+def minimizer(f:Callable[[np.ndarray],float],
+              x0:np.ndarray, 
+              initial_step_size:float,
+              precision:float = 1e-10, 
+              max_iter:int=1000, 
+              allow_nonconvergence:bool=False)->np.ndarray:
+    '''function to find a minimum value over a R^n->R function.
+    currently implements Nelder-Mead as the algorithm of choice'''
+
+    a = 1 # default nelder mead coefficients
+    b = 0.5
+    c = 2
+    d = 0.5
+
+    # currently only 2d is implemented
+    if x0.size != 2: raise NotImplementedError('minimizer only works for 2d domains')
+    
+    p1 = [0,x0] # initial points
+    p2 = [0,x0 - np.array([initial_step_size,0])]
+    p3 = [0, x0 - np.array([0,initial_step_size])]
+    p1[0] = f(p1[1])
+    p2[0] = f(p2[1])
+    p3[0] = f(p3[1])
+    avg_point = lambda p1,p2,p3: ((p1[1][0] + p2[1][0] + p3[1][0])/3, (p1[1][1] + p2[1][1] + p3[1][1])/3)
+
+    for _ in range(max_iter):
+            
+        if p1[0] > p2[0]: p1,p2 = p2,p1 # ordering (lowest first)
+        if p2[0] > p3[0]: p2,p3 = p3,p2
+        if p1[0] > p2[0]: p1,p2 = p2,p1
+
+        
+        m = (p1[0] + p2[0] + p3[0])/3
+        var = (((p1[0]-m)**2 + (p2[0]-m)**2 + (p3[0]-m)**2)/2)
+        if var < precision**2: # termination (based on ssd of function values)
+            return np.array(avg_point(p1,p2,p3))
+
+        cent = 0.5*(p1[1] + p2[1]) # centroid
+
+        reflect_p = cent + a*(cent - p3[1]) # transform
+        reflect = [f(reflect_p), reflect_p]
+        if p1[0] <= reflect[0] < p2[0]:
+            p3 = reflect
+            continue
+
+        elif reflect[0] < p1[0]: # expand
+            expand_p = cent + c*(reflect_p - cent)
+            expand = [f(expand_p), expand_p]
+            if expand[0] < reflect[0]:
+                p3 = expand
+                continue
+            else:
+                p3 = reflect
+                continue
+        elif reflect[0] < p2[0]: # contract
+            if reflect[0] < p3[0]: 
+                contract_p = cent + b*(reflect_p - cent)
+            else:
+                contract_p = cent + b*(p3[1] - cent)
+            contract = [f(contract_p), contract_p]
+            if contract[0] < p3[0]:
+                p3 = contract
+                continue
+        else: # shrink
+            p3_p = p1[1] + d*(p3[1]-p1[1])
+            p3 = [f(p3_p), p3_p]
+            p2_p = p1[1] + d*(p2[1]-p1[1])
+            p2 = [f(p2_p), p2_p]
+            continue
+    else:
+        if allow_nonconvergence: return np.array(avg_point(p1,p2,p3))
+        else: raise ArithmeticError("Nelder-mead failed to converge")
+    
+    
     raise NotImplementedError("optimizer not implemented, sorry :(")
-    x = o.shgo(f,bounds,**kwargs, workers=-1)
-    return x.xl
+    

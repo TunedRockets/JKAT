@@ -13,7 +13,7 @@ from typing import overload
 
 from .elements import finf, f2r
 from .misc import stumpff_c, stumpff_s
-from .optim import root_finder_newton
+from .optimizers import root_finder_newton
 
 __all__ = [
     'Q_basis',

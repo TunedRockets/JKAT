@@ -20,4 +20,4 @@ from .anomalies import *
 from .consts import *
 
 # mathematical optimizers
-from .optim import *
+from .optimizers import *

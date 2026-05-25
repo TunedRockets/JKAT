@@ -449,7 +449,7 @@ class Orbit():
         return t_until
 
     def hohmann(self,other:"Orbit")->tuple[float,float,float]:
-        '''hohmann transfer between orbits'''
+        '''hohmann transfer between orbits, return dv1,dv2,time'''
         from ..trajectories import hohmann_transfer
         return hohmann_transfer(self.a,other.a,self.mu)
         

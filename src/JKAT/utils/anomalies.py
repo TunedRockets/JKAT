@@ -24,7 +24,7 @@ for now, only supports single inputs, but changing to
 numpy is trivial
 '''
 import math as m
-from .optim import root_finder_newton, root_finder_fallback
+from .optimizers import root_finder_newton, root_finder_fallback
 from . import elements as elem
 from .misc import stumpff_c, stumpff_s
 
