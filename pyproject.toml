@@ -1,23 +1,36 @@
 [build-system]
-requires = ["hatchling >= 1.26"]
-build-backend = "hatchling.build"
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools.packages.find]
+where =["src"]
+include =["JKAT"]
+
+
+[tool.setuptools.package-data]                                                                                                           
+JKAT=['ephemeris/*.txt']
+# bad way but it is what works
 
 [project]
 name = "JKAT"
-version = "0.0.1"
-authors = [
-  { name="Johannes Nilsson"},
+version = "0.1.6"
+dependencies = [
+    "numpy>=2.4.4",
+    "matplotlib>=3.10.9",
 ]
-
+requires-python = ">=3.13"
+authors = [
+  {name = "Johannes Nilsson"}
+]
 description = "Johannes Kepler Astrodynamical Toolbox - An easy to use tool for orbital analysis and mission planning (WIP)"
 readme = "Readme.md"
-requires-python = ">=3.13"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
-]
 license = "MIT"
+license-files = ["LICEN[CS]E.*"]
+classifiers = [
+  "Programming Language :: Python :: 3"
+]
+
 
 [project.urls]
 Homepage = "https://github.com/TunedRockets/JKAT"
-Issues = "https://github.com/TunedRockets/JKAT/issues"

@@ -2,3 +2,5 @@
 *.pyc
 .vscode*
 .coverage
+build*
+/src/JKAT.egg*

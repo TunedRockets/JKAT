@@ -7,8 +7,8 @@ from pytest import approx
 import math as m
 import numpy as np
 
-from src.kep import Orbit, orbit_from_keplerian, orbit_from_rv, orbit_from_lambert
-from src.utils import EARTH_RADIUS, EARTH_MU, DAY, SIDEREAL_DAY, elazr2vec, \
+from src.JKAT.kep import Orbit, orbit_from_keplerian, orbit_from_rv, orbit_from_lambert
+from src.JKAT.utils import EARTH_RADIUS, EARTH_MU, DAY, SIDEREAL_DAY, elazr2vec, \
     f2r, r2f, h2p, apse2ae, a2T, propagate_vectors
 
 
@@ -234,7 +234,7 @@ def test_curtis_5_3():
     assert p_alt == approx(160.2+6378, rel=REL)
     assert t_p2 == approx(38_396, rel=REL)
 
-def test_curtis_6_1(self):
+def test_curtis_6_1():
         # using trajectory optimizer
         origin = orbit_from_keplerian(1,0,0,0,0,0,EARTH_MU)
         origin.set_apses(800+EARTH_RADIUS, 480+EARTH_RADIUS)

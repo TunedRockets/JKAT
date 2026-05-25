@@ -3,9 +3,9 @@ test all the time conversions
 
 '''
 
-from src.utils.anomalies import *
-from src.utils import EARTH_RADIUS, EARTH_MU, a2T, h2a, finf
-from src.kep import Orbit, orbit_from_keplerian
+from src.JKAT.utils.anomalies import *
+from src.JKAT.utils import EARTH_RADIUS, EARTH_MU, a2T, h2a, finf
+from src.JKAT.kep import Orbit, orbit_from_keplerian
 import math as m
 import numpy as np
 

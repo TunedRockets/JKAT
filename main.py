@@ -1,12 +1,12 @@
 
 
 
-from src.utils import *
-from src.kep import *
-from src.ephemeris import *
-from src.trajectories import porkchop_plot
+from src.JKAT.utils import *
+from src.JKAT.kep import *
+from src.JKAT.ephemeris import *
+from src.JKAT.trajectories import porkchop_plot
 
-import src.plotting as oplt
+import src.JKAT.plotting as oplt
 import matplotlib.pyplot as plt
 import numpy as np
 from tests.test_timings import test_uni_round_trip_hyper
