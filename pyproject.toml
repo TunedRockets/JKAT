@@ -5,16 +5,16 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where =["src"]
-include =["JKAT"]
+#include =["jkat"]
 
 
 [tool.setuptools.package-data]                                                                                                           
-JKAT=['ephemeris/*.txt']
+jkat=['ephemeris/*.txt']
 # bad way but it is what works
 
 [project]
-name = "JKAT"
-version = "0.1.6"
+name = "jkat"
+version = "0.1.8"
 dependencies = [
     "numpy>=2.4.4",
     "matplotlib>=3.10.9",

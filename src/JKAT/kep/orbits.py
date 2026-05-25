@@ -8,6 +8,10 @@ __all__ = [
     'Orbit'
 ]
 
+def who_is_the_coolest()->str:
+    '''who is it?'''
+    return 'Johannes 😎'
+
 
 class Orbit():
     '''

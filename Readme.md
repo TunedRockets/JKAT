@@ -7,26 +7,27 @@ JKAT is a python package that makes astrodynamical calculations easy. Many astro
 
 # guide
 
-WIP
+> Warning!
+This package is very much in alpha, expect regular changes, and even
+total remakes of the API. do NOT use this code for anything except playing around
 
+
+Guide coming soon...
 
 
 
 # in progress
 
- - [x] porkchop plot
  - [ ] porkchop optimizer
- - [x] propagate
- - [ ] curtis chapter 6
- - [x] hyperbolic origin
- - [x] distance to
- - [x] plane crossing
+ - [ ] tests for curtis chapter 6
  - [ ] time in shadow
  - [ ] transfer planner
+ - [ ] perturbations
+ - [ ] gravity assists and assist planning
 
  - [ ] proper docstrings
- - [x] Test PyPi release
  - [ ] PyPI release
+ - [ ] remove all `from x import y`/`from x import *` that clutter up the namespace
 
 
 

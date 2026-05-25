@@ -4,3 +4,4 @@
 .coverage
 build*
 /src/JKAT.egg*
+/src/jkat.egg*

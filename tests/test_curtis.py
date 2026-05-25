@@ -7,8 +7,8 @@ from pytest import approx
 import math as m
 import numpy as np
 
-from src.JKAT.kep import Orbit, orbit_from_keplerian, orbit_from_rv, orbit_from_lambert
-from src.JKAT.utils import EARTH_RADIUS, EARTH_MU, DAY, SIDEREAL_DAY, elazr2vec, \
+from src.jkat.kep import Orbit, orbit_from_keplerian, orbit_from_rv, orbit_from_lambert
+from src.jkat.utils import EARTH_RADIUS, EARTH_MU, DAY, SIDEREAL_DAY, elazr2vec, \
     f2r, r2f, h2p, apse2ae, a2T, propagate_vectors
 
 

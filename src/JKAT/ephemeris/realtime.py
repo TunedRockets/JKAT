@@ -37,8 +37,9 @@ J2000_epoch = dt.datetime(
 # be more intelligent with different conversion
 
 
-def to_time(d:dt.datetime)->float:
+def to_time(d:dt.datetime|dt.date)->float:
     '''turn python datetime (in UTC) into seconds since J2000 epoch'''
+    if isinstance(d,dt.date): d = dt.datetime(d.year,d.month,d.day)
     delta = d - J2000_epoch
     return delta.total_seconds()
 

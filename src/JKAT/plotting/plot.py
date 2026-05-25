@@ -64,7 +64,7 @@ def plot(
         f_low = max(f_bounds[0], ob.f(t_bounds[0]))
     else: f_low = f_bounds[0]
     if t_bounds[1] != m.inf:
-        f_high = max(f_bounds[1], ob.f(t_bounds[1]))
+        f_high = min(f_bounds[1], ob.f(t_bounds[1]))
     else: f_high = f_bounds[1]
 
     # get locus:
@@ -75,7 +75,7 @@ def plot(
 
     # generate colors if not supplied
     kwargs.setdefault('color',np.random.random(3))
-    pw = kwargs.pop('pw',9)
+    pw = kwargs.pop('pw',3)
 
     # plot the orbit:
     init()
@@ -133,7 +133,8 @@ def add_solar_system(t:float = 0, planets:str='11111000',symbols:bool=False, ini
     for i in range(len(planets)):
         if planets[i] == '0': continue
         plot(pla[i], t=t, color = colors[i], **kwargs, 
-             point_label= (sym[i] if symbols else (initial[i] if initials else None))
+             point_label= (sym[i] if symbols else (initial[i] if initials else None)),
+             pw = (9 if (symbols or initials) else None)
              )
-    center(color='gold')
+    center(color='gold', lw = (9 if (symbols or initials) else 4))
 
