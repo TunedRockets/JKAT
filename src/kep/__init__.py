@@ -7,6 +7,3 @@ from .orbits import *
 
 # methods for creating orbits
 from .determination import *
-
-# methods for solving determination problems
-from .solvers import *

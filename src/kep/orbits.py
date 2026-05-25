@@ -4,7 +4,7 @@ import math as m
 import numpy as np
 from typing import Never,overload
 from ..utils import * # change to non-star
-from ..Trajectories import *
+from ..trajectories import *
 __all__ = [
     'Orbit'
 ]

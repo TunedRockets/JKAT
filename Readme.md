@@ -13,7 +13,7 @@ JKAT shall be a python package that makes astrodynamical calculations easy. Many
 
 # in progress
 
- - [ ] porkchop plot
+ - [x] porkchop plot
  - [x] propagate
  - [ ] curtis chapter 6
        - [x] hohmann equations
@@ -22,6 +22,7 @@ JKAT shall be a python package that makes astrodynamical calculations easy. Many
  - [x] distance to
  - [x] plane crossing
  - [ ] time in shadow
+ - [ ] transfer planner
 
  - [ ] proper docstrings
  - [ ] PyPI release

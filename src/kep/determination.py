@@ -4,7 +4,7 @@ each function will return an orbit object.
 methods for finding optimal transfers are not included, just generation of orbits
 '''
 from .orbits import Orbit
-from .solvers import lambert
+from ..trajectories import lambert
 from ..utils import stumpff_c, stumpff_s, unit, a2p,\
 p2h, root_finder_bisection, L2M, M2t, f2t, vectors2kep
 import math as m
