@@ -8,10 +8,6 @@ __all__ = [
     'Orbit'
 ]
 
-def who_is_the_coolest()->str:
-    '''who is it?'''
-    return 'Johannes 😎'
-
 
 class Orbit():
     '''
@@ -348,6 +344,7 @@ class Orbit():
     
     def t2rvec(self,t:float)->np.ndarray:
         '''position vector at given epoch time'''
+        if m.isfinite(self.T): t %= self.T
         f = self.f(t)
         return self.rvec(f)
 
@@ -358,6 +355,7 @@ class Orbit():
     
     def t2vvec(self, t:float)->np.ndarray:
         '''velocity vector at given epoch time'''
+        if m.isfinite(self.T): t %= self.T
         f = self.f(t)
         return self.vvec(f)
 
@@ -368,6 +366,7 @@ class Orbit():
     
     def t2vectors(self,t:float)->tuple[np.ndarray,np.ndarray]:
         '''position and velocity vectors at given epoch time'''
+        if m.isfinite(self.T): t %= self.T
         f = self.f(t)
         return self.vectors(f)
 

@@ -7,7 +7,6 @@ mass   - kg
 time   - s
 
 '''
-import math as m
 
 # source: (https://ssd.jpl.nasa.gov/astro_par.html)
 # physical constants:

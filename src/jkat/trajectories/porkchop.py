@@ -13,7 +13,7 @@ __all__ = [
 
 
 def porkchop_plot(ob1:Orbit, ob2:Orbit,start_range:list[float]|np.ndarray, end_range:list[float]|np.ndarray,
-                        prograde:bool = True, rendezvous = True, min_alt=0)->np.ndarray:
+                        prograde:bool|None = True, rendezvous = True, min_alt=0)->np.ndarray:
     '''calculates the porkchop plot between two orbits, assumes sgp based on the first orbit
     returns a 2d array of all Dv values, and index of the lowest one.\n
     if rendezvous is true then breaking dv is included, otherwise not\n

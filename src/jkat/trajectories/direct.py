@@ -9,6 +9,8 @@ import numpy as np
 from ..utils import *
 from ..utils import stumpff_c,stumpff_s, root_finder_bisection
 
+# import matplotlib.pyplot as plt
+
 __all__ = [
     'direct_transfer',
     'lambert'
@@ -97,8 +99,6 @@ def _yzval(d):
 
 # variables to consider (each has _min, _max, _w)
 # dv1, dv2, ts, tt, te, r
-lim_vars = ['dv1','dv2','ts','tt','te','r']
-suffix_vars = ['_min','_max','_w']
 
 def direct_transfer(
         origin:Orbit,
@@ -110,14 +110,15 @@ def direct_transfer(
     bounds is the search area, **kwargs determine bounds and weights
     returns dict with: ts,te,dv1,dv2,r'''
     
+    np.seterr(all='ignore')
     
     # set **kwargs defaults
     kwargs.setdefault('dv1_min', 0)
     kwargs.setdefault('dv1_max', m.inf)
-    kwargs.setdefault('dv1_weight', 1) # intercept dV
+    kwargs.setdefault('dv1_w', 1) # intercept dV
     kwargs.setdefault('dv2_min', 0)
     kwargs.setdefault('dv2_max', m.inf)
-    kwargs.setdefault('dv2_weight', 1) # rendezvous dV (rendezvous by default)
+    kwargs.setdefault('dv2_w', 1) # rendezvous dV (rendezvous by default)
 
     default_max__time = max(origin.canonical_time_period, destination.canonical_time_period)
     kwargs.setdefault('ts_min',0)
@@ -138,7 +139,7 @@ def direct_transfer(
         kwargs['ts_min'] = bounds[0]
         kwargs['ts_max'] = bounds[1]
         kwargs['te_min'] = bounds[2]
-        kwargs['te_min'] = bounds[3]
+        kwargs['te_max'] = bounds[3]
     
         
     # first define optimizer function:
@@ -157,7 +158,7 @@ def direct_transfer(
         
         dv1 = np.linalg.norm(vl1-v1)
         dv2 = np.linalg.norm(vl2-v2)
-        r = np.linalg.norm(r2)/AU
+        r = np.linalg.norm(r2)
 
         # result exclusions:
         if not (kwargs['dv1_min'] < dv1 < kwargs['dv1_max']): return m.inf
@@ -177,7 +178,11 @@ def direct_transfer(
     
     
     # get points?
-    points = _pois(origin,destination,kwargs['ts_min'],kwargs['te_max'])
+    points = _pois(origin,destination,bounds=(
+        kwargs['ts_min'], kwargs['ts_max'], kwargs['te_min'], kwargs['te_max']
+    ))
+
+    points[:,1] -= points[:,0] # make travel time
 
     Fpoints = []
     for p in points: Fpoints.append(F(p))
@@ -215,11 +220,21 @@ def direct_transfer(
 
 
 
-def _pois(origin:Orbit, destination:Orbit, lower_time:float, upper_time:float)->np.ndarray:
+def _pois(origin:Orbit,
+          destination:Orbit,
+          bounds:tuple[float,float,float,float],
+          gridsize:int = 8)->np.ndarray:
     '''helper functions to generate times of interest for the trajectory optimizer,
     gets all apses, node-crossings, and potential hohmann transfer points'''
 
-    if (upper_time < lower_time): upper_time, lower_time = lower_time, upper_time
+    
+    bottom_s = bounds[0]
+    top_s = bounds[1]
+    bottom_e = bounds[2]
+    top_e = bounds[3]
+    bottom_s, top_s = sorted((bottom_s, top_s))
+    bottom_e, top_e = sorted((bottom_e, top_e))
+
 
     # apses and nodes
     ori_cross = origin.plane_crossing(destination)
@@ -244,9 +259,9 @@ def _pois(origin:Orbit, destination:Orbit, lower_time:float, upper_time:float)->
     starts = []
     ends = []
     for n in ori_nodes:
-        starts.extend(mod_bounds(lower_time, origin.t(n), upper_time, origin.period))
+        starts.extend(mod_bounds(bottom_s, origin.t(n), top_s, origin.period))
     for n in dest_nodes:
-        ends.extend(mod_bounds(lower_time, destination.t(n), upper_time, destination.period))
+        ends.extend(mod_bounds(bottom_e, destination.t(n), top_e, destination.period))
 
     pois = np.array(np.meshgrid(starts,ends)).T.reshape(-1,2)
     # mesh of nodes/apses
@@ -262,22 +277,28 @@ def _pois(origin:Orbit, destination:Orbit, lower_time:float, upper_time:float)->
 
 
         t = origin.hohmann_time(destination)
-        t = np.array(mod_bounds(lower_time,t,upper_time, origin.synodic_period(destination)))
+        t = np.array(mod_bounds(bottom_s,t,top_s, origin.synodic_period(destination)))
         t2 = t + origin.hohmann(destination)[2]
         poi = np.column_stack((t,t2))
         pois = np.vstack((pois,poi))
 
     # add edges of range:
-    dt = (upper_time-lower_time)/10
 
-    pois = np.vstack((pois, np.array([ # triangle of valid edge points
-        [lower_time+dt, lower_time+2*dt],
-        [lower_time+dt, upper_time-dt],
-        [upper_time-2*dt, upper_time-dt]
-    ])))
 
-    
-    # presort invalids:
-    pois = pois[pois[:,1] < upper_time]
-    pois = pois[pois[:,0] < pois[:,1]]
+    starts = np.linspace(bottom_s, top_s, gridsize+2)[1:-1]
+    ends = np.linspace(bottom_e, top_e, gridsize+2)[1:-1]
+
+    grid = np.array(np.meshgrid(starts,ends)).T.reshape(-1,2)
+
+    pois = np.vstack((pois,grid)) # extra grid of points
+
+    # pois = np.vstack((pois, np.array([ # square of the bounds a distance of dt from the edge
+    #     [bottom_s, bottom_e],
+    #     [bottom_s, top_e],
+    #     [top_s, bottom_e],
+    #     [top_s, top_e],
+    # ])))
+
+    # plt.scatter(pois[:,0],pois[:,1])
+
     return pois

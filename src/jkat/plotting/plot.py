@@ -35,11 +35,11 @@ def init():
 
 def plot(
         ob:Orbit,
-        f_bounds:tuple[float,float] = (-m.pi,m.pi),
-        t_bounds:tuple[float,float] = (-m.inf,m.inf),
+        f_bounds:tuple[float,float]|None = None,
+        t_bounds:tuple[float,float]|None = None,
         *,
         stilts:bool|float = m.radians(5),
-        stilt_separation:float = m.radians(30),
+        stilt_separation:float = m.radians(10),
         f:float|None = None,
         t:float|None = None,
         forward_predict:bool = False,
@@ -54,18 +54,36 @@ def plot(
     forward and backward predict plots a dashed line for the parts of the orbit 
     not inside the bounds
     '''
+    if not t_bounds is None:
+        ft_low = ob.f(t_bounds[0]) if m.isfinite(t_bounds[0]) else -2*m.pi
+        ft_high = ob.f(t_bounds[1]) if m.isfinite(t_bounds[1]) else 2*m.pi
+        while ft_low > ft_high: ft_high += 2*m.pi
 
-    # set limits:
-    if ob.e > 1: f_bounds = (
-        max(f_bounds[0], -ob.finf),
-        min(f_bounds[1], ob.finf)
-    )
-    if t_bounds[0] != -m.inf:
-        f_low = max(f_bounds[0], ob.f(t_bounds[0]))
-    else: f_low = f_bounds[0]
-    if t_bounds[1] != m.inf:
-        f_high = min(f_bounds[1], ob.f(t_bounds[1]))
-    else: f_high = f_bounds[1]
+    if f_bounds is None and t_bounds is None:
+        # full circle of -finf to finf
+        if ob.e > 1:  f_low = -ob.finf; f_high = ob.finf
+        else: f_low = -m.pi; f_high = m.pi
+    elif f_bounds is None: # t_bounds given
+        if ob.e > 1:
+            f_low = max(-ob.finf, ft_low) # type:ignore
+            f_high = min(ob.finf, ft_high) # type:ignore
+        else: 
+            f_low = ob.f(t_bounds[0]); f_high = ft_high # type: ignore
+    elif t_bounds is None: # fbounds given
+        if ob.e > 1:
+            f_low = max(-ob.finf, f_bounds[0]) # type:ignore
+            f_high = min(ob.finf, t_bounds[1]) # type:ignore
+        else: f_low = f_bounds[0]; f_high = t_bounds[1] # type: ignore
+    else:
+        if ob.e > 1:
+            f_low = max(-ob.finf, ft_low, f_bounds[0]) # type:ignore
+            f_high = min(ob.finf, ft_high, f_bounds[1]) # type:ignore
+        else: 
+            f_low = max(ft_low, f_bounds[1])
+            f_high = min(ft_high, f_bounds[1]) # type: ignore
+
+    # ensure no double wrap:
+    if f_high - f_low > 2*m.pi: f_high = f_low + 2*m.pi
 
     # get locus:
     pp = ob.point_locus(f_low, f_high).T
@@ -127,7 +145,7 @@ def add_solar_system(t:float = 0, planets:str='11111000',symbols:bool=False, ini
 
     pla = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
     colors = ['silver','wheat','cornflowerblue','orangered','darkorange','khaki','dodgerblue','royalblue']
-    sym = ['☿', '♀', '♁', '♂', '♃', '♄', '⛢', '♆']
+    sym = ['☿', '♀', '♁', '♂', '♃', '♄', '⛢', '♆'] # 🜨, ♁
     initial = ['H','V','E','M','J','S','U','N']
 
     for i in range(len(planets)):
