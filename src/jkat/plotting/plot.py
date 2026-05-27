@@ -46,6 +46,7 @@ def plot(
         backward_predict:bool = False,
         max_distance:float = m.inf,
         point_label:str|None = None,
+        resolution:int = 100,
         **kwargs
 )->None:
     '''plot an orbit in the 3d plane, along with a point if supplied.
@@ -59,6 +60,8 @@ def plot(
         ft_high = ob.f(t_bounds[1]) if m.isfinite(t_bounds[1]) else 2*m.pi
         while ft_low > ft_high: ft_high += 2*m.pi
 
+        if t_bounds[1]-t_bounds[0] > ob.T: ft_low = -2*m.pi; ft_high = 2*m.pi
+
     if f_bounds is None and t_bounds is None:
         # full circle of -finf to finf
         if ob.e > 1:  f_low = -ob.finf; f_high = ob.finf
@@ -68,7 +71,7 @@ def plot(
             f_low = max(-ob.finf, ft_low) # type:ignore
             f_high = min(ob.finf, ft_high) # type:ignore
         else: 
-            f_low = ob.f(t_bounds[0]); f_high = ft_high # type: ignore
+            f_low = ft_low; f_high = ft_high # type: ignore
     elif t_bounds is None: # fbounds given
         if ob.e > 1:
             f_low = max(-ob.finf, f_bounds[0]) # type:ignore
@@ -86,7 +89,7 @@ def plot(
     if f_high - f_low > 2*m.pi: f_high = f_low + 2*m.pi
 
     # get locus:
-    pp = ob.point_locus(f_low, f_high).T
+    pp = ob.point_locus(f_low, f_high, resolution).T
 
     # get rid of things beyond max distance:
     pp = pp[:,np.linalg.norm(pp,axis=0) < max_distance]
@@ -104,14 +107,15 @@ def plot(
     if (not f is None) or (not t is None): # plot point
         
         p = ob.t2rvec(t) if t is not None else ob.rvec(f) # type: ignore
-        ax.scatter(p[0],p[1],p[2], **kwargs, lw=pw)
+        if np.linalg.norm(p) < max_distance:
+            ax.scatter(p[0],p[1],p[2], **kwargs, lw=pw)
 
-        # add label:
-        if point_label:
-            ax.text(p[0],p[1],p[2], point_label, ha="center", va="center", weight='bold', zorder=99) # type:ignore
+            # add label:
+            if point_label:
+                ax.text(p[0],p[1],p[2], point_label, ha="center", va="center", weight='bold', zorder=99) # type:ignore
     
     # add stilts:
-    if stilts is True or (isinstance(stilts,float) and ob.i > stilts):
+    if stilts is True or (isinstance(stilts,float) and abs(ob.i) > stilts):
         ss =  np.arange(f_low, f_high+1e-6, stilt_separation)
         ss = ob.rvec(ss)
         ss = ss[np.linalg.norm(ss,axis=1) < max_distance]

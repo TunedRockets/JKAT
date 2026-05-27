@@ -23,28 +23,43 @@ rendezvous
 
 # ISO = jkat.examples.ATLAS
 
+# ap = 5.45 AU
+# pe = 10 sun radii
+# longp = 124.14 *
+# raan = 100.4 *
+# i = 1.3 *
+from jkat.utils import elements
+a,e = elements.apse2ae(5.45*jkat.AU, 10*jkat.SUN_RADIUS)
+
+park = jkat.orbit_from_ephemeris(
+    a, e, m.radians(1.3), 0, m.radians(124.14), m.radians(100.4), jkat.SUN_MU
+)
+
+jkat.plot(park, f=3, resolution=500, color='purple')
+
 ISO = jkat.Orbit(
     utils.pe2p(0.7*jkat.AU, 1.4),
-    1.4,
-    0.5,
+    1.2,
+    -2,
     0.4,
     1.3,
     jkat.JULIAN_YEAR,
     jkat.SUN_MU
 )
 
-Earth = jkat.Earth
-tp = ISO.tp
+# Earth = jkat.Earth
+Earth = park
+tp = park.tp
 dt = jkat.JULIAN_YEAR
 
-res = jkat.direct_transfer(Earth,ISO, (tp-dt, tp+dt, tp-dt, tp+dt), dv1_w = 1, dv2_w = 1)
+res = jkat.direct_transfer(Earth,ISO, (tp-10*86_000, tp+86_000, tp-dt, tp+dt), dv1_w = 1, dv2_w = 1)
 
 trans = jkat.orbit_from_lambert_transfer(Earth,ISO,res['ts'],res['te'])
 pprint(res)
 
 print(trans)
-jkat.plot(trans,t_bounds=(res['ts'], res['te']), color="purple")
-jkat.plot(ISO, t=res['te'], t_bounds=(-m.inf, res['te']+dt), max_distance=8*jkat.AU, color="deeppink")
+jkat.plot(trans,t_bounds=(res['ts'], res['te']+dt), color="purple")
+jkat.plot(ISO, t=res['te'], t_bounds=(-m.inf, res['te']+dt), max_distance=15*jkat.AU, color="deeppink")
 jkat.add_solar_system(symbols=True, t=res['te'])
 jkat.show()
 # timerange = np.linspace(tp-dt, tp+dt)

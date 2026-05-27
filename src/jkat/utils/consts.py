@@ -23,6 +23,7 @@ MARS_MU =  4.2828e4   # [km^3/s^2]
 # source: (https://ssd.jpl.nasa.gov/planets/phys_par.html)
 EARTH_RADIUS = 6371 # (mean) [km]
 MARS_RADIUS = 3389.5 # (mean) [km]
+SUN_RADIUS = 695_700 # (mean) [km]
 
 # time:
 DAY = 86400 # [s]
