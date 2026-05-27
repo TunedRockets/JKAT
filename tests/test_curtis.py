@@ -9,8 +9,8 @@ import numpy as np
 
 from src.jkat.kep import Orbit, orbit_from_keplerian, orbit_from_rv, orbit_from_lambert
 from src.jkat.utils import EARTH_RADIUS, EARTH_MU, DAY, SIDEREAL_DAY, elazr2vec, \
-    f2r, r2f, h2p, apse2ae, a2T, propagate_vectors
-
+    f2r, r2f, h2p, apse2ae, a2T, propagate_vectors, vcirc, f2v, a2p, p2h
+from src.jkat.trajectories import *
 
 REL = 2e-3
 
@@ -237,13 +237,66 @@ def test_curtis_5_3():
 def test_curtis_6_1():
         # using trajectory optimizer
         origin = orbit_from_keplerian(1,0,0,0,0,0,EARTH_MU)
-        origin.set_apses(800+EARTH_RADIUS, 480+EARTH_RADIUS)
-        destination = orbit_from_keplerian(1,0,0,0,0,0,EARTH_MU)
-        destination.a = (16_000+EARTH_RADIUS)
+        origin.set_apses(800+6378, 480+6378)
+        destination = orbit_from_keplerian(16_000+6378,0,0,0,0,0,EARTH_MU)
+        T = a2T((origin.pe + destination.ap)/2,EARTH_MU)
+        destination.link_tf(T, m.pi)
 
-        raise NotImplementedError()
+        res = direct_transfer(origin,
+                            destination,
+                            (-100,100,T-100,T+100),
+                            prograde=True, dv2_w=1)
+        
+        assert res['dv1'] == approx(1.7225, rel=REL)
+        assert res['dv2'] == approx(1.3297, rel=REL)
+
+def test_curtis_6_1_alt():
+    dv1,dv2,T = hohmann_transfer(480+6378, 16000+6378,EARTH_MU)
+    
+    # adjust for the elliptic orbit
+    a,e = apse2ae(480+6378, 800+6378)
+    p = a2p(a,e)
+    h = p2h(p,EARTH_MU)
+    dv3 = f2v(0,p,e,h) - vcirc(0,p,e,h)
+    dv1 -= dv3
 
 
-        dv1,dv2,_,_,_ = trajectory_optimizer(origin,destination,(0,destination.period,0,destination.period),1,1)
-        assert within_1_percent(dv1, 1.7225)
-        assert within_1_percent(dv2, 1.3297)
+    assert dv1 == approx(1.7225, rel=REL)
+    assert dv2 == approx(1.3297, rel=REL)
+
+
+# need time-independent transfer between orbits
+
+def test_curtis_6_2():
+    raise NotImplementedError()
+
+
+
+def test_curtis_6_4():
+    raise NotImplementedError()
+    # phasing
+
+
+def test_curtis_6_5():
+    raise NotImplementedError()
+    # phasing
+
+def test_curtis_6_6():
+    raise NotImplementedError()
+    # fpa and velocity diff
+
+def test_curtis_6_7():
+    raise NotImplementedError()
+    # fpa and velocity diff
+
+def test_curtis_6_8():
+    raise NotImplementedError()
+    # arbitrary v maneuver
+
+def test_curtis_6_9():
+    raise NotImplementedError()
+    # complex trajectory
+
+def test_curtis_6_11():
+    raise NotImplementedError()
+    # complex trajectory

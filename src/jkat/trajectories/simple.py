@@ -24,7 +24,7 @@ def hohmann_transfer(r1:float, r2:float ,mu:float)->tuple[float, float, float]:
     
     dv1 = m.sqrt(mu/r1)*abs( # first burn
         m.sqrt(2*r2/(r1+r2)) - 1)
-    dv2 = m.sqrt(mu/r1)*abs( # second burn
+    dv2 = m.sqrt(mu/r2)*abs( # second burn
         m.sqrt(2*r1/(r1+r2)) - 1)
     T = a2T(apse2ae(r1,r2)[0],mu) # tranfer orbit period
     return dv1,dv2, T/2

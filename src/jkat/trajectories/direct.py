@@ -128,12 +128,14 @@ def direct_transfer(
     kwargs.setdefault('te_max', default_max__time)
     kwargs.setdefault('te_w', 0)
     kwargs.setdefault('tt_min',0)
-    kwargs.setdefault('tt_max', default_max__time)
+    kwargs.setdefault('tt_max', m.inf)
     kwargs.setdefault('tt_w', 0)
 
     kwargs.setdefault('r_min',0)
     kwargs.setdefault('r_max', m.inf)
     kwargs.setdefault('r_w', 0)
+
+    kwargs.setdefault('prograde', None)
 
     if not bounds is None:
         kwargs['ts_min'] = bounds[0]
@@ -152,7 +154,7 @@ def direct_transfer(
         r1,v1 = origin.t2vectors(s)
         r2,v2 = destination.t2vectors(s+t)
         try:
-            vl1,vl2 = lambert(r1,r2,t,origin.mu)
+            vl1,vl2 = lambert(r1,r2,t,origin.mu, kwargs['prograde'])
         except (ArithmeticError, ValueError): return m.inf # trajectories doesn't work
 
         
