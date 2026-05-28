@@ -1,7 +1,17 @@
 ''' 
-Direct transfer from one orbit to another, as well as the lambert transfer 
+Direct transfers from one orbit to another, as well as the lambert transfer 
 it is based on (move this?)
-TODO!!! inprecise and bad
+
+current transfers:
+- direct transfer
+    simple orbiting body to other orbiting body optimizer
+wanted transfers:
+- inclination augmented direct transfer
+    allow change inclination before performing transfer
+- time agnostic orbit transfer
+    transfer from otbit to orbit, not caring about position in final orbit
+
+
 '''
 from ..kep import Orbit
 import math as m
@@ -92,11 +102,7 @@ def _yzval(d):
     a = np.interp(d,darr,aarr)
     return a
 
-
-
-
 # origin, destination, start bound, end bound, **kwargs (weights and min-max)
-
 # variables to consider (each has _min, _max, _w)
 # dv1, dv2, ts, tt, te, r
 
@@ -219,9 +225,6 @@ def direct_transfer(
         'r': np.linalg.norm(r2)
     }
 
-
-
-
 def _pois(origin:Orbit,
           destination:Orbit,
           bounds:tuple[float,float,float,float],
@@ -304,3 +307,20 @@ def _pois(origin:Orbit,
     # plt.scatter(pois[:,0],pois[:,1])
 
     return pois
+
+
+
+
+
+def apse_line_rotating_direct_transfer(
+        origin:Orbit,
+        destination:Orbit,
+        t_i_change:float,
+        i_bounds:tuple[float,float]=(-m.pi,m.pi),
+        bounds:tuple[float,float,float,float]|None = None,
+        **kwargs)->dict:
+    ''' 
+    Similar to direct transfer but allows a change in rotation around the apse line before optimizer is run.
+    
+    '''
+    raise NotImplementedError()
