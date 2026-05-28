@@ -18,6 +18,8 @@ import math as m
 import numpy as np
 from ..utils import *
 from ..utils import stumpff_c,stumpff_s, root_finder_bisection
+from .simple import orbit_rotation
+
 
 # import matplotlib.pyplot as plt
 
@@ -201,7 +203,7 @@ def direct_transfer(
     # try the best:
     for p in points:
         try:
-            opt = minimizer(F,p,dt) #type:ignore
+            opt = minimizer(F,p,np.array([dt,dt])) 
             break # found one
         except (ValueError, ArithmeticError):
             # this one didn't work
@@ -312,15 +314,157 @@ def _pois(origin:Orbit,
 
 
 
-def apse_line_rotating_direct_transfer(
+def rotation_direct_transfer(
         origin:Orbit,
         destination:Orbit,
-        t_i_change:float,
-        i_bounds:tuple[float,float]=(-m.pi,m.pi),
+        t_rot:float|None=None,
+        f_rot:float|None=None,
         bounds:tuple[float,float,float,float]|None = None,
         **kwargs)->dict:
     ''' 
     Similar to direct transfer but allows a change in rotation around the apse line before optimizer is run.
+    returns dv stats (0,1,2) and also the rotated orbit
     
     '''
+
+    # similar to direct transfer:
+    np.seterr(all='ignore')
+    
+    # set **kwargs defaults
+    kwargs.setdefault('dv1_min', 0)
+    kwargs.setdefault('dv1_max', m.inf)
+    kwargs.setdefault('dv1_w', 1) # intercept dV
+    kwargs.setdefault('dv2_min', 0)
+    kwargs.setdefault('dv2_max', m.inf)
+    kwargs.setdefault('dv2_w', 1) # rendezvous dV (rendezvous by default)
+
+    default_max__time = max(origin.canonical_time_period, destination.canonical_time_period)
+    kwargs.setdefault('ts_min',0)
+    kwargs.setdefault('ts_max', default_max__time)
+    kwargs.setdefault('ts_w', 0)
+    kwargs.setdefault('te_min',0)
+    kwargs.setdefault('te_max', default_max__time)
+    kwargs.setdefault('te_w', 0)
+    kwargs.setdefault('tt_min',0)
+    kwargs.setdefault('tt_max', m.inf)
+    kwargs.setdefault('tt_w', 0)
+
+    kwargs.setdefault('r_min',0)
+    kwargs.setdefault('r_max', m.inf)
+    kwargs.setdefault('r_w', 0)
+
+    kwargs.setdefault('prograde', None)
+
+    kwargs.setdefault('dv0_min', 0)
+    kwargs.setdefault('dv0_max',m.inf)
+    kwargs.setdefault('dv0_w', 1) # rotation dV
+    kwargs.setdefault('conservative', True)
+
+    if (f_rot is None) and (t_rot is None): raise ValueError("No rotation point provided. (set either f_rot or t_rot)")
+    if (not f_rot is None) and (not t_rot is None): raise ValueError("Overconstrained rotation point. (set either f_rot or t_rot)")
+    f_rot = origin.f(t_rot) if f_rot is None else f_rot # type: ignore
+
+    if not bounds is None:
+        kwargs['ts_min'] = bounds[0]
+        kwargs['ts_max'] = bounds[1]
+        kwargs['te_min'] = bounds[2]
+        kwargs['te_max'] = bounds[3]
+    
+        
+    # first define optimizer function:
+    def F(str:np.ndarray)->float: # start + travel time + rotation
+        s = str[0]; t = str[1]; r = str[2]
+        # time exclusions:
+        if not (kwargs['ts_min'] < s < kwargs['ts_max']): return m.inf
+        if not (kwargs['tt_min'] < t < kwargs['tt_max']): return m.inf
+        if not (kwargs['te_min'] < s + t < kwargs['te_max']): return m.inf # ensure we're not outside bounds
+
+        # rotate orbit:
+        dv0, ob = orbit_rotation(origin, r, f=f_rot, conservative=kwargs['conservative'])
+
+
+        r1,v1 = ob.t2vectors(s)
+        r2,v2 = destination.t2vectors(s+t)
+        try:
+            vl1,vl2 = lambert(r1,r2,t,origin.mu, kwargs['prograde'])
+        except (ArithmeticError, ValueError): return m.inf # trajectories doesn't work
+
+        dv0 = np.linalg.norm(dv0)
+        dv1 = np.linalg.norm(vl1-v1)
+        dv2 = np.linalg.norm(vl2-v2)
+        r = np.linalg.norm(r2)
+
+        # result exclusions:
+        if not (kwargs['dv0_min'] < dv0 < kwargs['dv0_max']): return m.inf
+        if not (kwargs['dv1_min'] < dv1 < kwargs['dv1_max']): return m.inf
+        if not (kwargs['dv2_min'] < dv2 < kwargs['dv2_max']): return m.inf
+        if not (kwargs['r_min'] < r < kwargs['r_max']): return m.inf
+
+
+        weight = (
+            s*kwargs['ts_w'] +
+            t*kwargs['tt_w'] +
+            (s+t)*kwargs['te_w'] +
+            dv0*kwargs['dv0_w'] +
+            dv1*kwargs['dv1_w'] +
+            dv2*kwargs['dv2_w'] +
+            r*kwargs['r_w']
+        )
+        return weight
+    
+    
+    # get points?
+    points = _pois(origin,destination,bounds=(
+        kwargs['ts_min'], kwargs['ts_max'], kwargs['te_min'], kwargs['te_max']
+    ))
+
+    points[:,1] -= points[:,0] # make travel time
+
+    # add the rotations
+    #TODO
+
+    Fpoints = []
+    for p in points: Fpoints.append(F(p))
+
+    points = points[np.argsort(Fpoints)]
+
+    dt = (kwargs['te_max'] - kwargs['te_min'])/20 + (kwargs['ts_max'] - kwargs['ts_min'])/20
+    # try the best:
+    for p in points:
+        try:
+            opt = minimizer(F,p,dt) #TODO new initial step
+            break # found one
+        except (ValueError, ArithmeticError):
+            # this one didn't work
+            continue
+    else:
+        raise ArithmeticError("no trajectory could be found")
+
+    s_opt = opt[0]
+    t_opt = opt[1]
+    r_opt = opt[2]
+
+    dv0, ob = orbit_rotation(origin,r_opt,f=f_rot, conservative=kwargs['conservative'])
+    
+
+    # compute properties:
+    r1,v1 = ob.t2vectors(s_opt)
+    r2,v2 = destination.t2vectors(s_opt+t_opt)
+    vl1,vl2 = lambert(r1,r2,t_opt,origin.mu)
+    return {
+        "ts": s_opt,
+        "te": s_opt+t_opt,
+        'dv0': np.linalg.norm(dv0),
+        "dv1": np.linalg.norm(vl1-v1),
+        "dv2": np.linalg.norm(vl2-v2),
+        'r': np.linalg.norm(r2),
+        'ob':ob
+    }
+
+
+
+
+
+
+
     raise NotImplementedError()

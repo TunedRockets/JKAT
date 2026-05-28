@@ -91,7 +91,7 @@ def root_finder_fallback(f:Callable[[float],float],
 
 def minimizer(f:Callable[[np.ndarray],float],
               x0:np.ndarray, 
-              initial_step_size:float,
+              initial_step:np.ndarray,
               precision:float = 1e-10, 
               max_iter:int=1000, 
               allow_nonconvergence:bool=False)->np.ndarray:
@@ -103,12 +103,12 @@ def minimizer(f:Callable[[np.ndarray],float],
     c = 2
     d = 0.5
 
-    # currently only 2d is implemented
+    # currently only 2d is implemented TODO
     if x0.size != 2: raise NotImplementedError('minimizer only works for 2d domains')
     
     p1 = [0,x0] # initial points
-    p2 = [0,x0 - np.array([initial_step_size,0])]
-    p3 = [0, x0 - np.array([0,initial_step_size])]
+    p2 = [0,x0 - np.array([initial_step[0],0])]
+    p3 = [0, x0 - np.array([0,initial_step[1]])]
     p1[0] = f(p1[1])
     p2[0] = f(p2[1])
     p3[0] = f(p3[1])
