@@ -66,7 +66,10 @@ __all__ = [
     'c3',
     'finf',
     'turn_angle',
-    'aiming_radius'
+    'aiming_radius',
+    'hohmann_transfer',
+    'hohmann_angle',
+    'synodic_period'
 ]
 
 

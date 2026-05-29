@@ -29,6 +29,7 @@ SUN_RADIUS = 695_700 # (mean) [km]
 DAY = 86400 # [s]
 SIDEREAL_DAY = 86164.0905 # [s]
 JULIAN_YEAR = DAY*365.25 # [s]
+YEAR = JULIAN_YEAR # [s] (because "julian" might be confusing for some people)
 JULIAN_CENTURY = JULIAN_YEAR*100 # [s]
 MJD_OFFSET = 2_451_554.5 # [days]
 # time between julian date epoch and J2000 epoch

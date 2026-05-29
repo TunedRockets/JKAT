@@ -406,9 +406,6 @@ class Orbit():
         :return: synodic period
         :rtype: float
         '''
-        from ..trajectories import synodic_period
-
-
         if self.e >=1 or other.e >= 1:
             raise ValueError("hyperbolic orbits do not have synodic periods")
         return synodic_period(self.T,other.T)
@@ -422,7 +419,7 @@ class Orbit():
         :return: optimal angle
         :rtype: float
         '''
-        from ..trajectories import hohmann_angle
+
         if self.e >=1 or other.e >= 1:
             raise ValueError("hyperbolic orbits do not have hohmann transfers")
         return hohmann_angle(self.a,other.a,self.mu)
@@ -437,7 +434,7 @@ class Orbit():
         :return: time of hohmann transfer
         :rtype: float
         '''
-        from ..trajectories import synodic_period
+
         if self.e >=1 or other.e >= 1:
             raise ValueError("hyperbolic orbits do not have hohmann transfers")
         
@@ -453,7 +450,7 @@ class Orbit():
 
     def hohmann(self,other:"Orbit")->tuple[float,float,float]:
         '''hohmann transfer between orbits, return dv1,dv2,time'''
-        from ..trajectories import hohmann_transfer
+
         return hohmann_transfer(self.a,other.a,self.mu)
         
 

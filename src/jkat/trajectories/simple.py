@@ -4,7 +4,8 @@ direct single burn changes in orbit
 
 import math as m
 from ..utils import *
-from ..kep import Orbit, orbit_from_rv
+from ..kep.orbits import Orbit
+import jkat.kep.determination as det
 import numpy as np
 from typing import overload
 
@@ -38,7 +39,7 @@ def single_burn(ob:Orbit, dVvec:np.ndarray, t:float|None=None,f:float|None=None)
 
     vvec += dVvec
 
-    ob2 = orbit_from_rv(rvec,vvec,ob.mu,t)
+    ob2 = det.orbit_from_rv(rvec,vvec,ob.mu,t)
     return ob2
 
 
@@ -67,7 +68,7 @@ def apse_line_rotation(ob:Orbit, angle:float, periapsis:bool=True, tref:float=0)
 
     vvec2 = rodrigues_rot(vvec,rvec,angle)
     dvvec = vvec2 - vvec
-    ob2 = orbit_from_rv(rvec,vvec2,ob.mu,t)
+    ob2 = det.orbit_from_rv(rvec,vvec2,ob.mu,t)
     return dvvec, ob2
 
 
@@ -95,5 +96,5 @@ def orbit_rotation(ob:Orbit, angle:float, t:float|None=None,f:float|None=None, c
         vvec2 = vproj
 
     dvvec = vvec2 - vvec
-    ob2 = orbit_from_rv(rvec,vvec2,ob.mu,t)
+    ob2 = det.orbit_from_rv(rvec,vvec2,ob.mu,t)
     return dvvec, ob2

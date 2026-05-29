@@ -89,7 +89,7 @@ def root_finder_fallback(f:Callable[[float],float],
         x0 = root_finder_bisection(f,lower,upper,precision)
     return x0
 
-def minimizer(f:Callable[[np.ndarray],float],
+def minimizer_old(f:Callable[[np.ndarray],float],
               x0:np.ndarray, 
               initial_step:np.ndarray,
               precision:float = 1e-10, 
@@ -165,3 +165,79 @@ def minimizer(f:Callable[[np.ndarray],float],
     
     raise NotImplementedError("optimizer not implemented, sorry :(")
     
+
+def minimizer(f:Callable[[np.ndarray],float],
+              x0:np.ndarray, 
+              initial_step:np.ndarray,
+              precision:float = 1e-10, 
+              max_iter:int=1000, 
+              allow_nonconvergence:bool=False)->np.ndarray:
+    '''function to find a minimum value over a R^n->R function.
+    currently implements Nelder-Mead as the algorithm of choice'''
+
+
+    a = 1 # default nelder mead coefficients
+    b = 0.5
+    c = 2
+    d = 0.5
+
+    parr = [x0]
+    for i in range(len(x0)): # square parr
+        x1 = x0.copy()
+        x1[i] = x1[i] +  initial_step[i]
+        parr.append(x1)
+    parr = np.array(parr)
+
+    Farr = []
+    for p in parr:
+        Farr.append(f(p))
+    Farr = np.array(Farr)
+    
+    for _ in range(max_iter):
+
+        idx = Farr.argsort() # sort ascending
+        Farr = Farr[idx]; parr = parr[idx]
+
+        std = np.std(Farr)
+        if std < precision: # termination (based on ssd of function values)
+            return np.average(parr, axis=0)
+
+        po = np.average(parr[0:-1], axis=0) # centroid of all except last
+
+        pr = po + a*(po - parr[-1]) # reflect
+        Fr = f(pr)
+        if Farr[0] <= Fr < Farr[-2]:
+            parr[-1] = pr
+            Farr[-1] = Fr
+            continue
+
+        if Fr < Farr[0]: # expand
+            pe = po + c*(pr - po)
+            Fe = f(pe)
+            if Fe < Fr:
+                parr[-1] = pe
+                Farr[-1] = Fe
+                continue
+            else:
+                parr[-1] = pr
+                Farr[-1] = Fr
+                continue
+        if Fr < Farr[-1]: # contract setup
+            pc = po + b*(pr - po)
+            Fc = f(pc)
+            Fcomp = Fr
+        else:
+            pc = po + b*(parr[-1] - po)
+            Fc = f(pc)
+            Fcomp = Farr[-1]
+        if Fc < Fcomp: # contract comparison
+            parr[-1] = pc
+            Farr[-1] = Fc
+        else: # shrink
+            for i in range(1,len(parr)):
+                parr[i] = parr[0] + d*(parr[i] - parr[0])
+                Farr[i] = f(parr[i])
+            continue
+    else:
+        if allow_nonconvergence: return np.average(parr, axis=0)
+        else: raise ArithmeticError("Nelder-mead failed to converge")

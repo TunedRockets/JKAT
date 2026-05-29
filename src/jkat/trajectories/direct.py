@@ -203,9 +203,9 @@ def direct_transfer(
     # try the best:
     for p in points:
         try:
-            opt = minimizer(F,p,np.array([dt,dt])) 
+            opt = minimizer(F,p,np.array((-dt,-dt))) 
             break # found one
-        except (ValueError, ArithmeticError):
+        except (ValueError, ArithmeticError) as e:
             # this one didn't work
             continue
     else:
@@ -311,21 +311,24 @@ def _pois(origin:Orbit,
     return pois
 
 
-
-
-
 def rotation_direct_transfer(
         origin:Orbit,
         destination:Orbit,
         t_rot:float|None=None,
         f_rot:float|None=None,
+        periodic:bool=True,
         bounds:tuple[float,float,float,float]|None = None,
         **kwargs)->dict:
     ''' 
     Similar to direct transfer but allows a change in rotation around the apse line before optimizer is run.
-    returns dv stats (0,1,2) and also the rotated orbit
+    returns dv stats (0,1,2) and also the rotated orbit. 
+
+    if periodic is true, will try the rotation for every option withing the bounds
+    returns dict with: tr, ts,te, dv0,dv1,dv2,r, ob'''
+
     
-    '''
+
+
 
     # similar to direct transfer:
     np.seterr(all='ignore')
@@ -363,13 +366,14 @@ def rotation_direct_transfer(
     if (f_rot is None) and (t_rot is None): raise ValueError("No rotation point provided. (set either f_rot or t_rot)")
     if (not f_rot is None) and (not t_rot is None): raise ValueError("Overconstrained rotation point. (set either f_rot or t_rot)")
     f_rot = origin.f(t_rot) if f_rot is None else f_rot # type: ignore
-
+    if t_rot is None: t_rot = origin.t(f_rot) # so we have that as well
     if not bounds is None:
         kwargs['ts_min'] = bounds[0]
         kwargs['ts_max'] = bounds[1]
         kwargs['te_min'] = bounds[2]
         kwargs['te_max'] = bounds[3]
-    
+
+
         
     # first define optimizer function:
     def F(str:np.ndarray)->float: # start + travel time + rotation
@@ -380,7 +384,7 @@ def rotation_direct_transfer(
         if not (kwargs['te_min'] < s + t < kwargs['te_max']): return m.inf # ensure we're not outside bounds
 
         # rotate orbit:
-        dv0, ob = orbit_rotation(origin, r, f=f_rot, conservative=kwargs['conservative'])
+        dv0, ob = orbit_rotation(origin, r, t=t_rot, conservative=kwargs['conservative'])
 
 
         r1,v1 = ob.t2vectors(s)
@@ -412,6 +416,22 @@ def rotation_direct_transfer(
         )
         return weight
     
+
+    # deal with periodic:
+    if periodic: # recursion!
+        times = mod_bounds(kwargs['ts_min'],t_rot,kwargs['te_max'], origin.T)
+        w_best = m.inf
+        res_best = {}
+        for time in times:
+            res = rotation_direct_transfer(origin,destination,time,periodic=False,bounds=bounds,**kwargs)
+            w = F(np.array((res['ts'],res['te'],res['rot'])))
+            if w < w_best:
+                w_best = w
+                res_best = res
+        return res_best # inefficient but it work.
+
+
+    
     
     # get points?
     points = _pois(origin,destination,bounds=(
@@ -421,7 +441,7 @@ def rotation_direct_transfer(
     points[:,1] -= points[:,0] # make travel time
 
     # add the rotations
-    #TODO
+    points = np.hstack((points,np.zeros((len(points),1))))
 
     Fpoints = []
     for p in points: Fpoints.append(F(p))
@@ -432,7 +452,7 @@ def rotation_direct_transfer(
     # try the best:
     for p in points:
         try:
-            opt = minimizer(F,p,dt) #TODO new initial step
+            opt = minimizer(F,p,np.array((-dt,dt, 0.2)))
             break # found one
         except (ValueError, ArithmeticError):
             # this one didn't work
@@ -454,6 +474,8 @@ def rotation_direct_transfer(
     return {
         "ts": s_opt,
         "te": s_opt+t_opt,
+        'tr': t_rot,
+        'rot':r_opt,
         'dv0': np.linalg.norm(dv0),
         "dv1": np.linalg.norm(vl1-v1),
         "dv2": np.linalg.norm(vl2-v2),
