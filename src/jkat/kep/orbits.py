@@ -442,6 +442,7 @@ class Orbit():
         phi_0 = other.f(0) - self.f(0)
         phi_opt = self.hohmann_angle(other)
         rel_n = other.n - self.n
+        if rel_n == 0: return m.inf # same time, no relative motion
 
         # want to wait to when it goes from phi_0 to phi'
         # phi = phi_0 + n*t (mod 2pi)

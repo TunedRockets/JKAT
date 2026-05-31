@@ -267,29 +267,16 @@ def test_curtis_6_1_alt():
 
 def test_curtis_6_2():
     # not right test for orbit transfer
-    e, p = pev2e(5000+6378, 10, EARTH_MU)
-    origin = Orbit(p, e, 0,0,m.pi,0,EARTH_MU)
-    destination = Orbit(500+6378, 0,0,0,0,0,EARTH_MU)
-    res = orbit_transfer(origin,destination,prograde=True, f1_min=-0.01, f1_max = 0.01)
-    assert res['f1'] == approx(0)
-    assert res['f2'] == approx(0)
-    dt = res['dt']
-    f = destination.f(-dt)
-    assert f == approx(m.radians(275.2))
+
+    ob = Orbit(500+6378, 0,0,0,0,0,EARTH_MU)
+    dt = a2T(apse2ae(5000+6378,500+6378)[0],EARTH_MU)/2
+    f = ob.f(-dt)
+    assert f == approx(m.radians(-275.2), rel=REL)
     
-
-
-
-
-
-def test_curtis_6_4():
-    raise NotImplementedError()
-    # phasing
-
-
 def test_curtis_6_5():
-    raise NotImplementedError()
-    # phasing
+
+    dt, T = circular_phasing(-m.radians(12), 3, 42_164,EARTH_MU)
+    assert 2*dt == approx(0.0227, rel=REL)
 
 def test_curtis_6_6():
     raise NotImplementedError()

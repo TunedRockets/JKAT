@@ -157,9 +157,9 @@ def direct_transfer(
     def F(st:np.ndarray)->float: # start + travel time
         s = st[0]; t = st[1]
         # time exclusions:
-        if not (kwargs['ts_min'] < s < kwargs['ts_max']): return m.inf
-        if not (kwargs['tt_min'] < t < kwargs['tt_max']): return m.inf
-        if not (kwargs['te_min'] < s + t < kwargs['te_max']): return m.inf # ensure we're not outside bounds
+        if not (kwargs['ts_min'] <= s <= kwargs['ts_max']): return m.inf
+        if not (kwargs['tt_min'] <= t <= kwargs['tt_max']): return m.inf
+        if not (kwargs['te_min'] <= s + t <= kwargs['te_max']): return m.inf # ensure we're not outside bounds
         r1,v1 = origin.t2vectors(s)
         r2,v2 = destination.t2vectors(s+t)
         try:
@@ -172,9 +172,9 @@ def direct_transfer(
         r = np.linalg.norm(r2)
 
         # result exclusions:
-        if not (kwargs['dv1_min'] < dv1 < kwargs['dv1_max']): return m.inf
-        if not (kwargs['dv2_min'] < dv2 < kwargs['dv2_max']): return m.inf
-        if not (kwargs['r_min'] < r < kwargs['r_max']): return m.inf
+        if not (kwargs['dv1_min'] <= dv1 <= kwargs['dv1_max']): return m.inf
+        if not (kwargs['dv2_min'] <= dv2 <= kwargs['dv2_max']): return m.inf
+        if not (kwargs['r_min'] <= r <= kwargs['r_max']): return m.inf
 
 
         weight = (
@@ -357,8 +357,8 @@ def orbit_transfer(
     def F(fft:np.ndarray)->float: # start + travel time
         f1 = fft[0]; f2 = fft[1]; dt = fft[2]
         # time exclusions:
-        if not (kwargs['f1_min'] < f1 < kwargs['f1_max']): return m.inf
-        if not (kwargs['f2_min'] < f2 < kwargs['f2_max']): return m.inf
+        if not (kwargs['f1_min'] <= f1 <= kwargs['f1_max']): return m.inf
+        if not (kwargs['f2_min'] <= f2 <= kwargs['f2_max']): return m.inf
         r1,v1 = origin.vectors(f1)
         r2,v2 = destination.vectors(f2)
         try:
@@ -370,9 +370,9 @@ def orbit_transfer(
         r = np.linalg.norm(r2)
 
         # result exclusions:
-        if not (kwargs['dv1_min'] < dv1 < kwargs['dv1_max']): return m.inf
-        if not (kwargs['dv2_min'] < dv2 < kwargs['dv2_max']): return m.inf
-        if not (kwargs['r_min'] < r < kwargs['r_max']): return m.inf
+        if not (kwargs['dv1_min'] <= dv1 <= kwargs['dv1_max']): return m.inf
+        if not (kwargs['dv2_min'] <= dv2 <= kwargs['dv2_max']): return m.inf
+        if not (kwargs['r_min'] <= r <= kwargs['r_max']): return m.inf
 
         weight = (
             f1*kwargs['f1_w'] +
@@ -492,9 +492,9 @@ def rotation_direct_transfer(
     def F(str:np.ndarray)->float: # start + travel time + rotation
         s = str[0]; t = str[1]; r = str[2]
         # time exclusions:
-        if not (kwargs['ts_min'] < s < kwargs['ts_max']): return m.inf
-        if not (kwargs['tt_min'] < t < kwargs['tt_max']): return m.inf
-        if not (kwargs['te_min'] < s + t < kwargs['te_max']): return m.inf # ensure we're not outside bounds
+        if not (kwargs['ts_min'] <= s <= kwargs['ts_max']): return m.inf
+        if not (kwargs['tt_min'] <= t <= kwargs['tt_max']): return m.inf
+        if not (kwargs['te_min'] <= s + t <= kwargs['te_max']): return m.inf # ensure we're not outside bounds
 
         # rotate orbit:
         dv0, ob = orbit_rotation(origin, r, t=t_rot, conservative=kwargs['conservative'])
@@ -512,10 +512,10 @@ def rotation_direct_transfer(
         r = np.linalg.norm(r2)
 
         # result exclusions:
-        if not (kwargs['dv0_min'] < dv0 < kwargs['dv0_max']): return m.inf
-        if not (kwargs['dv1_min'] < dv1 < kwargs['dv1_max']): return m.inf
-        if not (kwargs['dv2_min'] < dv2 < kwargs['dv2_max']): return m.inf
-        if not (kwargs['r_min'] < r < kwargs['r_max']): return m.inf
+        if not (kwargs['dv0_min'] <= dv0 <= kwargs['dv0_max']): return m.inf
+        if not (kwargs['dv1_min'] <= dv1 <= kwargs['dv1_max']): return m.inf
+        if not (kwargs['dv2_min'] <= dv2 <= kwargs['dv2_max']): return m.inf
+        if not (kwargs['r_min'] <= r <= kwargs['r_max']): return m.inf
 
 
         weight = (

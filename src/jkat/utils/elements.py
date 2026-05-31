@@ -70,7 +70,8 @@ __all__ = [
     'aiming_radius',
     'hohmann_transfer',
     'hohmann_angle',
-    'synodic_period'
+    'synodic_period',
+    'circular_phasing'
 ]
 
 
@@ -236,6 +237,7 @@ def hohmann_transfer(r1:float, r2:float ,mu:float)->tuple[float, float, float]:
 
 def synodic_period(T1:float, T2:float)->float:
     '''synodic period of two periods'''
+    if T1 == T2: return m.inf
     return (T1*T2)/abs(T1-T2)
 
 def hohmann_angle(r1:float, r2:float, mu:float)->float:
@@ -245,3 +247,23 @@ def hohmann_angle(r1:float, r2:float, mu:float)->float:
     T_tra = a2T(0.5*(r1+r2),mu)/2
     return m.pi - T2n(a2T(r1,mu))*T_tra
     
+def circular_phasing(df:float, n:int, a:float, mu:float)->tuple[float, float]:
+    '''change in phase (+ve is forward in orbit), number of orbits, semi-major axis, and mu
+    to single delta v and time'''
+
+    df = df/n # phase per orbit
+    T = a2T(a,mu)
+    dt = -(df/(2*m.pi))*T # single orbit phasing extra time
+    T_new = T+dt
+    a_new = T2a(T_new, mu)
+    v1 = vcirc(0,a,0,p2h(a,mu))
+    a_new,e = apse2ae(a, 2*a_new-a)
+    v2 = f2v((0 if a_new > a else m.pi),a2p(a_new,e),e,p2h(a_new,mu))
+    dv = abs(v1-v2)
+    return dv, T_new*n
+
+
+
+
+
+
