@@ -5,7 +5,7 @@ direct single burn changes in orbit
 import math as m
 from ..utils import *
 from ..kep.orbits import Orbit
-import jkat.kep.determination as det
+from ..kep import determination as det
 import numpy as np
 from typing import overload
 
@@ -41,37 +41,6 @@ def single_burn(ob:Orbit, dVvec:np.ndarray, t:float|None=None,f:float|None=None)
 
     ob2 = det.orbit_from_rv(rvec,vvec,ob.mu,t)
     return ob2
-
-
-# unused, remove?
-def apse_line_rotation(ob:Orbit, angle:float, periapsis:bool=True, tref:float=0)->tuple[np.ndarray,Orbit]:
-    ''' rotate orbit counterclockwise around the apse line, either at apoapsis or periapsis,
-    if a time is given, will ensure the roation is done at the apse after that time, otherwise it's done
-    for the apse after the epoch (for hyperbolic orbits it's fixed at the singular periapsis).
-    returns delta v vector and resulting orbit'''
-
-    # get point in time
-    f = 0 if periapsis else m.pi
-
-    if ob.e < 1:
-        t = ob.t(f)
-        if t < tref:
-            while t < tref: t += ob.T
-        else:
-            while t > tref: t -= ob.T
-            t += ob.T
-    else:
-        t = ob.t(f) # better have chosen periapsis...
-    
-    # decompose into r and v and rotate along r
-    rvec,vvec = ob.vectors(f)
-
-    vvec2 = rodrigues_rot(vvec,rvec,angle)
-    dvvec = vvec2 - vvec
-    ob2 = det.orbit_from_rv(rvec,vvec2,ob.mu,t)
-    return dvvec, ob2
-
-
 
 def orbit_rotation(ob:Orbit, angle:float, t:float|None=None,f:float|None=None, conservative:bool=True)->tuple[np.ndarray, Orbit]:
     '''rotate the orbit around it's r vector at a given point. a conservative rotation keeps the magnitude of the 

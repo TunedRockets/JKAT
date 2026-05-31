@@ -25,6 +25,7 @@ from .simple import orbit_rotation
 
 __all__ = [
     'direct_transfer',
+    'orbit_transfer',
     'lambert'
 ]
 
@@ -205,7 +206,7 @@ def direct_transfer(
         try:
             opt = minimizer(F,p,np.array((-dt,-dt))) 
             break # found one
-        except (ValueError, ArithmeticError) as e:
+        except (ValueError, ArithmeticError):
             # this one didn't work
             continue
     else:
@@ -218,7 +219,7 @@ def direct_transfer(
     # compute properties:
     r1,v1 = origin.t2vectors(s_opt)
     r2,v2 = destination.t2vectors(s_opt+t_opt)
-    vl1,vl2 = lambert(r1,r2,t_opt,origin.mu)
+    vl1,vl2 = lambert(r1,r2,t_opt,origin.mu, prograde=kwargs["prograde"])
     return {
         "ts": s_opt,
         "te": s_opt+t_opt,
@@ -310,6 +311,118 @@ def _pois(origin:Orbit,
 
     return pois
 
+
+def orbit_transfer(
+        origin:Orbit,
+        destination:Orbit,
+        **kwargs,
+)->dict:
+    '''function for calculating the optimal transfer between two orbiting objects,
+    unlike direct transfer, does not take into account timing or phasing,
+    just getting the right transfer at the right true anomaly
+    **kwargs determine bounds and weights
+    returns dict with: f1,f2,dv1,dv2,r'''
+    
+    np.seterr(all='ignore')
+    
+    # set **kwargs defaults
+    kwargs.setdefault('dv1_min', 0)
+    kwargs.setdefault('dv1_max', m.inf)
+    kwargs.setdefault('dv1_w', 1) # intercept dV
+    kwargs.setdefault('dv2_min', 0)
+    kwargs.setdefault('dv2_max', m.inf)
+    kwargs.setdefault('dv2_w', 1) # rendezvous dV (rendezvous by default)
+
+    kwargs.setdefault('f1_min',-m.pi)
+    kwargs.setdefault('f1_max', m.pi)
+    kwargs.setdefault('f1_w', 0)
+    kwargs.setdefault('f2_min',-m.pi)
+    kwargs.setdefault('f2_max', m.pi)
+    kwargs.setdefault('f2_w', 0)
+
+    kwargs.setdefault('r_min',0)
+    kwargs.setdefault('r_max', m.inf)
+    kwargs.setdefault('r_w', 0)
+
+    kwargs.setdefault('prograde', None)
+
+    if origin.e > 1:
+        kwargs['f1_min'] = max(kwargs['f1_min'], -origin.finf)
+        kwargs['f1_max'] = min(kwargs['f1_max'], origin.finf)
+    if destination.e > 1:
+        kwargs['f2_min'] = max(kwargs['f2_min'], -destination.finf)
+        kwargs['f2_max'] = min(kwargs['f2_max'], destination.finf)
+        
+    # first define optimizer function:
+    def F(fft:np.ndarray)->float: # start + travel time
+        f1 = fft[0]; f2 = fft[1]; dt = fft[2]
+        # time exclusions:
+        if not (kwargs['f1_min'] < f1 < kwargs['f1_max']): return m.inf
+        if not (kwargs['f2_min'] < f2 < kwargs['f2_max']): return m.inf
+        r1,v1 = origin.vectors(f1)
+        r2,v2 = destination.vectors(f2)
+        try:
+            vl1,vl2 = lambert(r1,r2,dt,origin.mu, kwargs['prograde'])
+        except (ArithmeticError, ValueError): return m.inf # trajectories doesn't work
+        
+        dv1 = np.linalg.norm(vl1-v1)
+        dv2 = np.linalg.norm(vl2-v2)
+        r = np.linalg.norm(r2)
+
+        # result exclusions:
+        if not (kwargs['dv1_min'] < dv1 < kwargs['dv1_max']): return m.inf
+        if not (kwargs['dv2_min'] < dv2 < kwargs['dv2_max']): return m.inf
+        if not (kwargs['r_min'] < r < kwargs['r_max']): return m.inf
+
+        weight = (
+            f1*kwargs['f1_w'] +
+            f2*kwargs['f2_w'] +
+            dv1*kwargs['dv1_w'] +
+            dv2*kwargs['dv2_w'] +
+            r*kwargs['r_w']
+        )
+        return weight
+    
+    # get points
+    epsilon = 1e-8
+    ff1 = np.linspace(kwargs['f1_min']+epsilon, kwargs['f1_max']-epsilon, 8)
+    ff2 = np.linspace(kwargs['f2_min']+epsilon, kwargs['f2_max']-epsilon, 8)
+    tt = np.linspace(0, max(origin.canonical_time_period, destination.canonical_time_period), 5)[1:]
+    f1, f2, t = np.meshgrid(ff1,ff2,tt)
+    f1 = f1.flatten(); f2 = f2.flatten(); t = t.flatten()
+    points = np.column_stack((f1,f2,t))
+
+    Fpoints = []
+    for p in points: Fpoints.append(F(p))
+    points = points[np.argsort(Fpoints)]
+
+    x0 = np.array((0.1,0.1, tt[1]))
+    # try the best:
+    for p in points:
+        try:
+            opt = minimizer(F,p,x0) 
+            break # found one
+        except (ValueError, ArithmeticError):
+            # this one didn't work
+            continue
+    else:
+        raise ArithmeticError("no trajectory could be found")
+
+    f1_opt = opt[0]
+    f2_opt = opt[1]
+    t_opt = opt[2]
+    
+    # compute properties:
+    r1,v1 = origin.vectors(f1_opt)
+    r2,v2 = destination.vectors(f2_opt)
+    vl1,vl2 = lambert(r1,r2,t_opt,origin.mu, prograde=kwargs["prograde"])
+    return {
+        "f1": f1_opt,
+        "f2": f2_opt,
+        "dv1": np.linalg.norm(vl1-v1),
+        "dv2": np.linalg.norm(vl2-v2),
+        'r': np.linalg.norm(r2)
+    }
 
 def rotation_direct_transfer(
         origin:Orbit,

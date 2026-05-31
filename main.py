@@ -28,7 +28,7 @@ rendezvous
 # longp = 124.14 *
 # raan = 100.4 *
 # i = 1.3 *
-from jkat.utils import elements
+from src.jkat.utils import elements
 a,e = elements.apse2ae(5.45*jkat.AU, 10*jkat.SUN_RADIUS)
 
 park = jkat.orbit_from_ephemeris(

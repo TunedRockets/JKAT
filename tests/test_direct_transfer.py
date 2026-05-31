@@ -4,13 +4,8 @@
 import math as m
 import numpy as np
 
-import pytest
-from pytest import approx
-
-
 from src.jkat.utils.consts import YEAR
 from src.jkat import Earth, Mars, Jupiter
-
 
 import src.jkat.trajectories as tra
 
@@ -25,7 +20,7 @@ def assert_optim_works(time_range, origin,destination):
 
     res = tra.direct_transfer(origin,destination,(time_range[0],time_range[-1],time_range[0],time_range[-1]),dv1_w=1,dv2_w=1, prograde=True)
     
-    if True:
+    if False:
         plt.imshow(dvarr.T,extent=(time_range[0],time_range[-1],time_range[0],time_range[-1]), origin="lower",vmax=30)
         plt.scatter(ts,te, label="prokchop min")
         plt.scatter(res['ts'],res['te'],label="optimizer")
@@ -40,7 +35,7 @@ def test_opt_mars_2000():
     assert_optim_works(rang,Earth,Mars)
 
 def test_opt_mars_2010():
-    rang = np.linspace(10*YEAR,13*YEAR,200)
+    rang = np.linspace(10*YEAR,13*YEAR)
     assert_optim_works(rang,Earth,Mars)
 
 def test_opt_jupiter_2000():

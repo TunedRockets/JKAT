@@ -50,6 +50,7 @@ __all__ = [
     'h2pe',
     'apse2ae',
     'pe2p',
+    'pev2e',
     'r2f',
     'longp',
     'arglat',
@@ -174,6 +175,14 @@ def l(f:float, raan:float, argp:float)->float:
 
 
 # === hyperbolic values ====
+
+def pev2e(pe:float,vp:float, mu:float)->tuple[float,float]:
+    '''periapsis altitude and speed to eccentricity and parameter'''
+
+    h = pe*vp
+    p = h2p(h,mu)
+    e = p/pe - 1
+    return e, p
 
 def vcirc(f:float, p:float, e:float, h:float)->float:
     '''circular velocity'''

@@ -8,8 +8,8 @@ import math as m
 import numpy as np
 
 from src.jkat.kep import Orbit, orbit_from_keplerian, orbit_from_rv, orbit_from_lambert
-from src.jkat.utils import EARTH_RADIUS, EARTH_MU, DAY, SIDEREAL_DAY, elazr2vec, \
-    f2r, r2f, h2p, apse2ae, a2T, propagate_vectors, vcirc, f2v, a2p, p2h
+from src.jkat.utils import *
+    
 from src.jkat.trajectories import *
 
 REL = 2e-3
@@ -239,12 +239,10 @@ def test_curtis_6_1():
         origin = orbit_from_keplerian(1,0,0,0,0,0,EARTH_MU)
         origin.set_apses(800+6378, 480+6378)
         destination = orbit_from_keplerian(16_000+6378,0,0,0,0,0,EARTH_MU)
-        T = a2T((origin.pe + destination.ap)/2,EARTH_MU)
-        destination.link_tf(T, m.pi)
 
-        res = direct_transfer(origin,
+
+        res = orbit_transfer(origin,
                             destination,
-                            (-100,100,T-100,T+100),
                             prograde=True, dv2_w=1)
         
         assert res['dv1'] == approx(1.7225, rel=REL)
@@ -268,7 +266,19 @@ def test_curtis_6_1_alt():
 # need time-independent transfer between orbits
 
 def test_curtis_6_2():
-    raise NotImplementedError()
+    # not right test for orbit transfer
+    e, p = pev2e(5000+6378, 10, EARTH_MU)
+    origin = Orbit(p, e, 0,0,m.pi,0,EARTH_MU)
+    destination = Orbit(500+6378, 0,0,0,0,0,EARTH_MU)
+    res = orbit_transfer(origin,destination,prograde=True, f1_min=-0.01, f1_max = 0.01)
+    assert res['f1'] == approx(0)
+    assert res['f2'] == approx(0)
+    dt = res['dt']
+    f = destination.f(-dt)
+    assert f == approx(m.radians(275.2))
+    
+
+
 
 
 

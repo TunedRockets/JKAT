@@ -16,21 +16,17 @@ Guide coming soon...
 
 
 
-# in progress
 
- - [ ] porkchop optimizer
- - [ ] tests for curtis chapter 6
- - [ ] time in shadow
- - [ ] transfer planner
+
+# TODO:
+ - [ ] flesh out tests for curtis chapter 6
+
+ - [ ] gravity assist optimizer
  - [ ] perturbations
  - [ ] gravity assists and assist planning
+ - [ ] hook into jpl-horizons for ephemerides (more accurate probably not needed)
 
  - [ ] proper docstrings
  - [ ] PyPI release
  - [ ] make imports like `from x import y`/`from x import *` consistent.
 
-
-
-all the hohmann stuff
-
-other relative stuff
