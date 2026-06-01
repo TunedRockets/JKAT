@@ -16,11 +16,14 @@ which is equivalent to:
 assume datetime is UTC
 '''
 import datetime as dt
+from ..utils.consts import DAY
 
 __all__ = [
     'to_time',
     'from_time',
-    'J2000_epoch'
+    'J2000_epoch',
+    'to_JD',
+    'from_JD'
 ]
 
 J2000_epoch = dt.datetime(
@@ -47,3 +50,19 @@ def to_time(d:dt.datetime|dt.date)->float:
 def from_time(t:float)->dt.datetime:
     delta = dt.timedelta(seconds=t)
     return J2000_epoch + delta
+
+def to_JD(t:float, MJD2000:bool=False)->float:
+    '''return julian date from time since ephemeris,
+    if MJD2000 is true will use 2000 as 0 JD'''
+
+    t /= DAY
+    if not MJD2000: t += 2451545
+    return t
+
+def from_JD(JD:float, MJD2000:bool=False)->float:
+    '''return time since ephemeris from julian date,
+    if MJD2000 is true will use 2000 as 0 JD'''
+
+    if not MJD2000: JD -= 2451545
+    JD *= DAY
+    return JD
