@@ -25,6 +25,7 @@ from .simple import orbit_rotation
 
 __all__ = [
     'direct_transfer',
+    'rotation_direct_transfer',
     'orbit_transfer',
     'lambert'
 ]
@@ -116,7 +117,8 @@ def direct_transfer(
         **kwargs,
 )->dict:
     '''function for calculating the optimal transfer between two orbiting objects,
-    bounds is the search area, **kwargs determine bounds and weights
+    bounds is the search area, **kwargs determine bounds and weights,
+    softly enforces dv limits to not break optimizer
     returns dict with: ts,te,dv1,dv2,r'''
     
     np.seterr(all='ignore')
@@ -171,10 +173,16 @@ def direct_transfer(
         dv2 = np.linalg.norm(vl2-v2)
         r = np.linalg.norm(r2)
 
-        # result exclusions:
-        if not (kwargs['dv1_min'] <= dv1 <= kwargs['dv1_max']): return m.inf
-        if not (kwargs['dv2_min'] <= dv2 <= kwargs['dv2_max']): return m.inf
-        if not (kwargs['r_min'] <= r <= kwargs['r_max']): return m.inf
+        # result exclusions (softly):
+        if not (kwargs['dv1_min'] <= dv1 <= kwargs['dv1_max']): 
+            if kwargs['dv1_w'] > 0: dv1 *= 10_000
+            else: return m.inf
+        if not (kwargs['dv2_min'] <= dv2 <= kwargs['dv2_max']): 
+            if kwargs['dv2_w'] > 0: dv2 *= 10_000
+            else: return m.inf
+        if not (kwargs['r_min'] <= r <= kwargs['r_max']): 
+            if kwargs['r_w'] > 0: r *= 10_000
+            else: return m.inf
 
 
         weight = (
@@ -199,6 +207,7 @@ def direct_transfer(
     for p in points: Fpoints.append(F(p))
 
     points = points[np.argsort(Fpoints)]
+    points = points[np.isfinite(Fpoints)]
 
     dt = (kwargs['te_max'] - kwargs['te_min'])/20 + (kwargs['ts_max'] - kwargs['ts_min'])/20
     # try the best:
@@ -220,11 +229,18 @@ def direct_transfer(
     r1,v1 = origin.t2vectors(s_opt)
     r2,v2 = destination.t2vectors(s_opt+t_opt)
     vl1,vl2 = lambert(r1,r2,t_opt,origin.mu, prograde=kwargs["prograde"])
+    dv1 = np.linalg.norm(vl1-v1)
+    dv2 = np.linalg.norm(vl2-v2)
+
+    # assert the soft forcing didn't kill it:
+    if not (kwargs['dv1_min'] <= dv1 <= kwargs['dv1_max']) or (kwargs['dv2_min'] <= dv2 <= kwargs['dv2_max']): 
+        raise ArithmeticError("no trajectory could be found")
+
     return {
         "ts": s_opt,
         "te": s_opt+t_opt,
-        "dv1": np.linalg.norm(vl1-v1),
-        "dv2": np.linalg.norm(vl2-v2),
+        "dv1": dv1,
+        "dv2": dv2,
         'r': np.linalg.norm(r2)
     }
 
@@ -395,6 +411,7 @@ def orbit_transfer(
     Fpoints = []
     for p in points: Fpoints.append(F(p))
     points = points[np.argsort(Fpoints)]
+    points = points[np.isfinite(Fpoints)]
 
     x0 = np.array((0.1,0.1, tt[1]))
     # try the best:
@@ -485,12 +502,17 @@ def rotation_direct_transfer(
         kwargs['ts_max'] = bounds[1]
         kwargs['te_min'] = bounds[2]
         kwargs['te_max'] = bounds[3]
+    else:
+        bounds = (kwargs['ts_min'],
+                  kwargs['ts_max'],
+                  kwargs['te_min'],
+                  kwargs['te_max'],)
 
 
         
     # first define optimizer function:
     def F(str:np.ndarray)->float: # start + travel time + rotation
-        s = str[0]; t = str[1]; r = str[2]
+        s = str[0]; t = str[1]; r = str[2] % (2*m.pi)
         # time exclusions:
         if not (kwargs['ts_min'] <= s <= kwargs['ts_max']): return m.inf
         if not (kwargs['tt_min'] <= t <= kwargs['tt_max']): return m.inf
@@ -532,12 +554,14 @@ def rotation_direct_transfer(
 
     # deal with periodic:
     if periodic: # recursion!
-        times = mod_bounds(kwargs['ts_min'],t_rot,kwargs['te_max'], origin.T)
+        times = mod_bounds(kwargs['ts_min'],t_rot,kwargs['ts_max'], origin.T)
         w_best = m.inf
         res_best = {}
         for time in times:
-            res = rotation_direct_transfer(origin,destination,time,periodic=False,bounds=bounds,**kwargs)
-            w = F(np.array((res['ts'],res['te'],res['rot'])))
+            b = list(bounds)
+            b[1] = time
+            res = rotation_direct_transfer(origin,destination,time,periodic=False,bounds=b,**kwargs) # type:ignore
+            w = F(np.array((res['ts'],res['te'] - res['ts'],res['rot'])))
             if w < w_best:
                 w_best = w
                 res_best = res
@@ -554,18 +578,26 @@ def rotation_direct_transfer(
     points[:,1] -= points[:,0] # make travel time
 
     # add the rotations
-    points = np.hstack((points,np.zeros((len(points),1))))
+    lpoints = len(points)
+    points = np.vstack((
+        points, points, points, points
+    ))
+    rotations = np.vstack((
+        np.zeros((lpoints, 1)), np.pi/2 * np.ones((lpoints,1)), np.pi * np.ones((lpoints,1)), np.pi*3/2 * np.ones((lpoints,1))
+    ))
+    points = np.hstack((points,rotations))
 
     Fpoints = []
     for p in points: Fpoints.append(F(p))
 
     points = points[np.argsort(Fpoints)]
+    points = points[np.isfinite(Fpoints)]
 
     dt = (kwargs['te_max'] - kwargs['te_min'])/20 + (kwargs['ts_max'] - kwargs['ts_min'])/20
     # try the best:
     for p in points:
         try:
-            opt = minimizer(F,p,np.array((-dt,dt, 0.2)))
+            opt = minimizer(F,p,np.array((-dt,dt, 0.2)), precision=1e-6) # lower precision to save computing time
             break # found one
         except (ValueError, ArithmeticError):
             # this one didn't work
@@ -595,11 +627,3 @@ def rotation_direct_transfer(
         'r': np.linalg.norm(r2),
         'ob':ob
     }
-
-
-
-
-
-
-
-    raise NotImplementedError()

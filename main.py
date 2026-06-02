@@ -20,63 +20,46 @@ need trajectories:
 intercept, 
 rendezvous
 '''
-print('bb')
 
 
 
 
-n = 50
-tt = np.linspace(-40*jkat.YEAR, 40*jkat.YEAR, n)
-
-# ob = horizons_request('sedna', t_start=tt[0], t_end=tt[-n//2], steps=n)
-ob = jkat.Earth
-print(ob)
-pp = []; ee = []; ii = []; rraan = []; aargp = []; ttp = []
-for t in tt:
-    ob.current_time = t
-    pp.append(ob.p)
-    ee.append(ob.e)
-    ii.append(ob.i)
-    rraan.append(ob.raan)
-    aargp.append(ob.argp)
-    ttp.append(ob.tp)
-pp = np.array(pp); ee = np.array(ee); ii = np.array(ii); rraan = np.array(rraan); aargp = np.array(aargp); ttp = np.array(aargp)
-pp /= pp[0]
-ee /= ee[0]
-ii /= ii[0]
-rraan /= rraan[0]
-aargp /= aargp[0]
-ttp /= ttp[0]
-
-tt /= jkat.YEAR
-
-# plot over the time
-plt.plot(tt,pp, label='parameter')
-plt.plot(tt,ee, label='eccentricity')
-plt.plot(tt,ii, label='inclination')
-plt.plot(tt,rraan, label='right angle of ascending node')
-plt.plot(tt,aargp, label='argument of periapsis')
-plt.plot(tt,ttp, label='time of periapsis')
-plt.xlabel('time [Years]')
-plt.legend()
-plt.show()
+jkat.plot(jkat.examples.Omuamua, max_distance=10*jkat.AU)
+jkat.plot(jkat.examples.Borisov, max_distance=10*jkat.AU)
+jkat.plot(jkat.examples.ATLAS, max_distance=10*jkat.AU)
+jkat.add_solar_system()
+jkat.show()
 
 
 
+# ISO = jkat.examples.ATLAS
 
-# # ISO = jkat.examples.ATLAS
-
-# # ap = 5.45 AU
-# # pe = 10 sun radii
-# # longp = 124.14 *
-# # raan = 100.4 *
-# # i = 1.3 *
+# ap = 5.45 AU
+# pe = 10 sun radii
+# longp = 124.14 *
+# raan = 100.4 *
+# i = 1.3 *
 # from src.jkat.utils import elements
 # a,e = elements.apse2ae(5.45*jkat.AU, 10*jkat.SUN_RADIUS)
 
 # park = jkat.orbit_from_ephemeris(
 #     a, e, m.radians(1.3), 0, m.radians(124.14), m.radians(100.4), jkat.SUN_MU
 # )
+
+# jkat.plot(park)
+# jkat.plot(ISO, f=0, max_distance=10*jkat.AU)
+# jkat.add_solar_system()
+# jkat.show()
+
+
+# from jkat import YEAR
+# bounds = (ISO.tp - YEAR, ISO.tp + park.T*2, ISO.tp, ISO.tp + 30*YEAR)
+# try:
+#     res = jkat.trajectories.rotation_direct_transfer(park,ISO,f_rot=m.pi, bounds=bounds, periodic=True)
+#     print(res)
+# except: print('no orbit :(')
+# res = jkat.trajectories.direct_transfer(park, ISO, bounds=bounds)
+# print(res)
 
 # tt = np.linspace(park.tp - 86_000, park.tp+ 86_000,100)
 # rr = []

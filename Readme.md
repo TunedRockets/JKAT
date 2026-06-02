@@ -20,6 +20,7 @@ Guide coming soon...
 
 # TODO:
  - [ ] flesh out tests for curtis chapter 6
+ - [ ] remove duplication in transfer.direct
 
  - [ ] gravity assist optimizer
  - [ ] perturbations
