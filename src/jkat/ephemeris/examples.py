@@ -11,6 +11,15 @@ from datetime import datetime
 from pathlib import Path
 import math as m
 __all__ = [
+    'Mercury_hz',
+    'Venus_hz',
+    'Earth_hz',
+    'Mars_hz',
+    "Jupiter_hz",
+    'Saturn_hz',
+    'Uranus_hz',
+    'Neptune_hz',
+    'Pluto_hz',
     'Mercury',
     'Venus',
     'Earth',
@@ -19,22 +28,40 @@ __all__ = [
     'Saturn',
     'Uranus',
     'Neptune',
-    'Pluto'
+    'Pluto',
 ]
 
 t_start = datetime(1950,1,1)
 t_end = datetime(2050,1,1)
 N = 200
 
-Mercury =  horizons_request(199, t_start=t_start, t_end=t_end, steps=N)
-Venus =  horizons_request(299, t_start=t_start, t_end=t_end, steps=N)
-Earth =  horizons_request(399, t_start=t_start, t_end=t_end, steps=N)
-Mars =  horizons_request(499, t_start=t_start, t_end=t_end, steps=N)
-Jupiter =  horizons_request(599, t_start=t_start, t_end=t_end, steps=N)
-Saturn =  horizons_request(699, t_start=t_start, t_end=t_end, steps=N)
-Uranus =  horizons_request(799, t_start=t_start, t_end=t_end, steps=N)
-Neptune =  horizons_request(899, t_start=t_start, t_end=t_end, steps=N)
-Pluto =  horizons_request(999, t_start=t_start, t_end=t_end, steps=N)
+Mercury_hz =  horizons_request(199, t_start=t_start, t_end=t_end, steps=N)
+Venus_hz =  horizons_request(299, t_start=t_start, t_end=t_end, steps=N)
+Earth_hz =  horizons_request(399, t_start=t_start, t_end=t_end, steps=N)
+Mars_hz =  horizons_request(499, t_start=t_start, t_end=t_end, steps=N)
+Jupiter_hz =  horizons_request(599, t_start=t_start, t_end=t_end, steps=N)
+Saturn_hz =  horizons_request(699, t_start=t_start, t_end=t_end, steps=N)
+Uranus_hz =  horizons_request(799, t_start=t_start, t_end=t_end, steps=N)
+Neptune_hz =  horizons_request(899, t_start=t_start, t_end=t_end, steps=N)
+Pluto_hz =  horizons_request(999, t_start=t_start, t_end=t_end, steps=N)
+
+# osculating keplerian orbits:
+Mercury = Mercury_hz.osculating_orbit(0)
+Venus = Venus_hz.osculating_orbit(0)
+Earth = Earth_hz.osculating_orbit(0)
+Mars = Mars_hz.osculating_orbit(0)
+Jupiter = Jupiter_hz.osculating_orbit(0)
+Saturn = Saturn_hz.osculating_orbit(0)
+Uranus = Uranus_hz.osculating_orbit(0)
+Neptune = Neptune_hz.osculating_orbit(0)
+Pluto = Pluto_hz.osculating_orbit(0)
+
+
+
+
+
+
+
 
 
 # ISOs:

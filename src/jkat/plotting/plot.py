@@ -152,7 +152,7 @@ def center(**kwargs):
 def add_solar_system(t:float = 0, planets:str='11111000',symbols:bool=False, initials:bool=False, **kwargs):
     '''adds the solar system. planet string determines which planets to add'''
 
-    pla = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
+    pla = [Mercury_hz, Venus_hz, Earth_hz, Mars_hz, Jupiter_hz, Saturn_hz, Uranus_hz, Neptune_hz]
     colors = ['silver','wheat','cornflowerblue','orangered','darkorange','khaki','dodgerblue','royalblue']
     sym = ['☿', '♀', '♁', '♂', '♃', '♄', '⛢', '♆'] # 🜨, ♁
     initial = ['H','V','E','M','J','S','U','N']

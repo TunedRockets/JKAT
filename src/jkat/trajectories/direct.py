@@ -147,6 +147,7 @@ def direct_transfer(
     kwargs.setdefault('r_w', 0)
 
     kwargs.setdefault('prograde', None)
+    kwargs.setdefault('soft_max', False)
 
     if not bounds is None:
         kwargs['ts_min'] = bounds[0]
@@ -173,16 +174,20 @@ def direct_transfer(
         dv2 = np.linalg.norm(vl2-v2)
         r = np.linalg.norm(r2)
 
-        # result exclusions (softly):
-        if not (kwargs['dv1_min'] <= dv1 <= kwargs['dv1_max']): 
-            if kwargs['dv1_w'] > 0: dv1 *= 10_000
-            else: return m.inf
-        if not (kwargs['dv2_min'] <= dv2 <= kwargs['dv2_max']): 
-            if kwargs['dv2_w'] > 0: dv2 *= 10_000
-            else: return m.inf
-        if not (kwargs['r_min'] <= r <= kwargs['r_max']): 
-            if kwargs['r_w'] > 0: r *= 10_000
-            else: return m.inf
+        if kwargs['soft_max']:# result exclusions (softly):
+            if not (kwargs['dv1_min'] <= dv1 <= kwargs['dv1_max']): 
+                if kwargs['dv1_w'] > 0: dv1 *= 10_000
+                else: return m.inf
+            if not (kwargs['dv2_min'] <= dv2 <= kwargs['dv2_max']): 
+                if kwargs['dv2_w'] > 0: dv2 *= 10_000
+                else: return m.inf
+            if not (kwargs['r_min'] <= r <= kwargs['r_max']): 
+                if kwargs['r_w'] > 0: r *= 10_000
+                else: return m.inf
+        else:
+            if not (kwargs['dv1_min'] <= dv1 <= kwargs['dv1_max']): return m.inf
+            if not (kwargs['dv2_min'] <= dv2 <= kwargs['dv2_max']): return m.inf
+            if not (kwargs['r_min'] <= r <= kwargs['r_max']): return m.inf
 
 
         weight = (
@@ -233,8 +238,9 @@ def direct_transfer(
     dv2 = np.linalg.norm(vl2-v2)
 
     # assert the soft forcing didn't kill it:
-    if not (kwargs['dv1_min'] <= dv1 <= kwargs['dv1_max']) or (kwargs['dv2_min'] <= dv2 <= kwargs['dv2_max']): 
-        raise ArithmeticError("no trajectory could be found")
+    if kwargs['soft_max']:
+        if not (kwargs['dv1_min'] <= dv1 <= kwargs['dv1_max']) or (kwargs['dv2_min'] <= dv2 <= kwargs['dv2_max']): 
+            raise ArithmeticError("no trajectory could be found")
 
     return {
         "ts": s_opt,
