@@ -32,7 +32,6 @@ def init():
 
 
 # to make:
-
 def plot(
         ob:Orbit,
         f_bounds:tuple[float,float]|None = None,
@@ -46,7 +45,7 @@ def plot(
         backward_predict:bool = False,
         max_distance:float = m.inf,
         point_label:str|None = None,
-        resolution:int = 100,
+        resolution:int = 360,
         **kwargs
 )->None:
     '''plot an orbit in the 3d plane, along with a point if supplied.
@@ -56,8 +55,14 @@ def plot(
     not inside the bounds
     '''
     if not t_bounds is None:
-        ft_low = ob.f(t_bounds[0]) if m.isfinite(t_bounds[0]) else -2*m.pi
-        ft_high = ob.f(t_bounds[1]) if m.isfinite(t_bounds[1]) else 2*m.pi
+        try:
+            ft_low = ob.f(t_bounds[0]) if m.isfinite(t_bounds[0]) else -2*m.pi
+        except (OverflowError):
+            ft_low = -2*m.pi
+        try:
+            ft_high = ob.f(t_bounds[1]) if m.isfinite(t_bounds[1]) else 2*m.pi
+        except (OverflowError):
+            ft_high = 2*m.pi
         while ft_low > ft_high: ft_high += 2*m.pi
 
         if t_bounds[1]-t_bounds[0] > ob.T: ft_low = -2*m.pi; ft_high = 2*m.pi
