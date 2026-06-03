@@ -10,6 +10,7 @@ JKAT is a python package that makes astrodynamical calculations easy. Many astro
 > Warning!
 This package is very much in alpha, expect regular changes, and even
 total remakes of the API. do NOT use this code for anything except playing around
+this is just published for fun, and will be tidied up at a later date
 
 
 Guide coming soon...
@@ -25,9 +26,10 @@ Guide coming soon...
  - [ ] gravity assist optimizer
  - [ ] perturbations
  - [ ] gravity assists and assist planning
- - [ ] hook into jpl-horizons for ephemerides (more accurate probably not needed)
+ - [x] hook into jpl-horizons for ephemerides (more accurate probably not needed)
+ - [ ] figure out best way to represent horizons in examples (and figure out wierdness at t=0)
 
  - [ ] proper docstrings
- - [ ] PyPI release
+ - [x] PyPI release
  - [ ] make imports like `from x import y`/`from x import *` consistent.
 
