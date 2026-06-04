@@ -13,7 +13,7 @@ import time
 
 from ..utils.consts import JULIAN_YEAR
 from .realtime import to_JD, from_JD, to_time
-from ..utils import pe2p
+from ..utils import a2p
 from ..kep import Orbit
 import pickle
 __all__ = [
@@ -132,7 +132,7 @@ def _request_cache(request:str, grab_first:bool)->Ephemerical_Orbit:
 
 
 def horizons_request(name:str|int,
-                     center:str|int=0,
+                     center:str|int=10,
                      ecliptic:bool=False,
                      t_start:float|dt.datetime = 0,
                      t_end:float|dt.datetime = JULIAN_YEAR,
@@ -144,7 +144,7 @@ def horizons_request(name:str|int,
 
     if isinstance(name,int): name = str(name)
     if isinstance(center,int): center = str(center)
-    if center == '0': ecliptic = True # nothing else for sun barycenter
+    if center.lower() in ('0', '10', 'sun', 'ssb'): ecliptic = True # nothing else for the sun
 
     # create request
     request = URL
@@ -173,7 +173,7 @@ def _request_to_orbit(request, grab_first:bool)->Ephemerical_Orbit:
 
     re.M = True
     result = req.get(request)
-    if not result.ok: raise LookupError('Bad return from JPL-Horizons')
+    if not result.ok: raise LookupError(f'Bad return from JPL-Horizons: {result.text}')
     result = result.text
 
     if re.search(r'(Multiple major-bodies match string)|(Small-body Index Search Results)', result):
@@ -254,13 +254,13 @@ def _request_to_orbit(request, grab_first:bool)->Ephemerical_Orbit:
         o = float(m[1])
         oo.append(math.radians(o))
     
-    # extract parameter (by way of periapsis):
+    # extract parameter (by way of semi-major axis):
     pp = []
     idx = 0
-    while not (m := re.search(r'QR= ([0-9.E\-+]+)', content)) is None:
+    while not (m := re.search(r'A = ([0-9.E\-+]+)', content)) is None:
         content = content.replace(m[0], '')
-        q = float(m[1])
-        pp.append(pe2p(q, ee[idx]))
+        a = float(m[1])
+        pp.append(a2p(a, ee[idx]))
         idx += 1
 
     # extract tp:
