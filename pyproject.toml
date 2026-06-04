@@ -14,11 +14,7 @@ jkat=['ephemeris/*.txt']
 
 [project]
 name = "jkat"
-<<<<<<< HEAD
-version = "0.1.11.2"
-=======
-version = "0.1.12"
->>>>>>> 7fd8d50d031c5fc3523d9f1c74e91dac04b1844c
+version = "0.1.11.3"
 dependencies = [
     "numpy>=2.4.4",
     "matplotlib>=3.10.9",
