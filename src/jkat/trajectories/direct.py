@@ -65,7 +65,7 @@ def lambert(r1vec:np.ndarray, r2vec:np.ndarray, dt:float, mu:float,
     def y(z,S,C):
         try:
             return 2 + A * (z*S-1) / m.sqrt(C) # since r1+r2 = 2 [DU]
-        except ZeroDivisionError, ValueError:
+        except (ZeroDivisionError, ValueError):
             return 2 # when S & C hits 0, best to tread 2nd term as 0
 
     def F(z):
@@ -79,7 +79,7 @@ def lambert(r1vec:np.ndarray, r2vec:np.ndarray, dt:float, mu:float,
 
         b = 39.477 # (4pi^2) upper bound
         z = root_finder_bisection(F,a,b)
-    except ValueError: raise ArithmeticError("Lambert failed to find root, possibly too short time")
+    except (ValueError): raise ArithmeticError("Lambert failed to find root, possibly too short time")
 
     # use result to find lagrange coefficients:
     Sz = S(z)

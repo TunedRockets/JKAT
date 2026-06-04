@@ -36,7 +36,7 @@ def test_kepler_universal_time_hyper():
                 kep = t2f_kep(t,e,h,mu)
                 uni = t2f(t,e,h,mu)
                 assert uni == approx(kep, rel=REL)
-            except ArithmeticError: continue
+            except (ArithmeticError): continue
 
 def test_kepler_universal_theta_elliptical():
     h = EARTH_RADIUS*8  
@@ -60,7 +60,7 @@ def test_kepler_universal_theta_hyper():
                 kep = f2t_kep(f,e,h,mu)
                 uni = f2t(f,e,h,mu)
                 assert uni == approx(kep, rel=REL)
-            except ArithmeticError: continue
+            except (ArithmeticError): continue
 
 
 def test_uni_round_trip_elliptical():
@@ -89,7 +89,7 @@ def test_uni_round_trip_hyper():
                 t2 = f2t(f2,e,h,mu)
                 assert f == approx(f2, rel=REL)
                 assert t == approx(t2, rel=REL)
-            except ArithmeticError: continue
+            except (ArithmeticError): continue
 
 
 def test_orbit_tp():

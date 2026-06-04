@@ -117,7 +117,7 @@ def _request_cache(request:str, grab_first:bool)->Ephemerical_Orbit:
     try:
         with open(CACHE, 'rb') as file:
             cache = pickle.load(file)
-    except FileNotFoundError: cache = {}
+    except (FileNotFoundError): cache = {}
 
     result = cache.get(request, None)
     if result is None:

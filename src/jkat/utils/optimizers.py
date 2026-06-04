@@ -85,7 +85,7 @@ def root_finder_fallback(f:Callable[[float],float],
     try:
         x0 = root_finder_newton(f,df,(upper+lower)/2,max_iter,precision)
         if not (lower < x0 < upper): raise ArithmeticError("Converged wrong")
-    except ArithmeticError:
+    except (ArithmeticError):
         x0 = root_finder_bisection(f,lower,upper,precision)
     return x0
 

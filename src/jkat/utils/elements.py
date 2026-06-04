@@ -131,7 +131,7 @@ def r2f(r:float, p:float, e:float)->float:
     '''return true anomaly that results in given radius.
     returns nan if radius is impossible'''
     try: return m.acos((p/r - 1)/e)
-    except ValueError: return m.nan
+    except (ValueError): return m.nan
 
 
 # === polar equation derivatives ===

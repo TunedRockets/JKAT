@@ -26,7 +26,7 @@ def porkchop_plot(ob1:Orbit, ob2:Orbit,start_range:list[float]|np.ndarray, end_r
     def eval_fn(r1,v1,r2,v2,s,e)->np.floating|float:
         if s >= e: return np.nan
         try: tv1, tv2 = lambert(r1,r2,(e-s), ob1.mu, prograde=prograde)
-        except ArithmeticError: return np.nan # failed to converge
+        except (ArithmeticError): return np.nan # failed to converge
         if cross_alt(r1,tv1): return np.nan
         dv1 = norm(tv1-v1)
         dv2 = norm(tv2-v2)
