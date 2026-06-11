@@ -26,10 +26,8 @@ Guide coming soon...
  - [ ] gravity assist optimizer
  - [ ] perturbations
  - [ ] gravity assists and assist planning
- - [x] hook into jpl-horizons for ephemerides (more accurate probably not needed)
  - [ ] figure out best way to represent horizons in examples (and figure out wierdness at t=0)
-
+ - [ ] reset plot on window close
  - [ ] proper docstrings
- - [x] PyPI release
  - [ ] make imports like `from x import y`/`from x import *` consistent.
 

@@ -21,20 +21,18 @@ intercept,
 rendezvous
 '''
 
-print('sending request')
-ob = horizons_request('499', center='0', t_start=0, t_end=5*jkat.YEAR)
-ob2 = horizons_request('499', center='10', t_start=0, t_end=5*jkat.YEAR)
-print('request done')
+ap = jkat.AU * 5.45
+pe = 10*jkat.SUN_RADIUS
+a, e = utils.apse2ae(ap,pe)
+p = utils.a2p(a,e)
+ob = jkat.Orbit(p,e,0,0,0,0,jkat.SUN_MU)
+v1 = ob.v(m.pi)
 
-tt =np.linspace(0,5*jkat.YEAR, 100)
-rr = []
-oo = []
-for t in tt:
-    ob.current_time = t
-    ob2.current_time = t
-    rr.append(ob.i)
-    oo.append(ob2.i)
+ap = jkat.AU * 5.45
+pe = 5*jkat.SUN_RADIUS
+a, e = utils.apse2ae(ap,pe)
+p = utils.a2p(a,e)
+ob = jkat.Orbit(p,e,0,0,0,0,jkat.SUN_MU)
+v2 = ob.v(m.pi)
 
-plt.plot(tt,rr)
-plt.plot(tt,oo)
-plt.show()
+print(f"difference: {v2-v1} km/s")

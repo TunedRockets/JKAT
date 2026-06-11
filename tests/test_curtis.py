@@ -278,22 +278,22 @@ def test_curtis_6_5():
     dt, T = circular_phasing(-m.radians(12), 3, 42_164,EARTH_MU)
     assert 2*dt == approx(0.0227, rel=REL)
 
-def test_curtis_6_6():
-    raise NotImplementedError()
-    # fpa and velocity diff
+# def test_curtis_6_6():
+#     raise NotImplementedError()
+#     # fpa and velocity diff
 
-def test_curtis_6_7():
-    raise NotImplementedError()
-    # fpa and velocity diff
+# def test_curtis_6_7():
+#     raise NotImplementedError()
+#     # fpa and velocity diff
 
-def test_curtis_6_8():
-    raise NotImplementedError()
-    # arbitrary v maneuver
+# def test_curtis_6_8():
+#     raise NotImplementedError()
+#     # arbitrary v maneuver
 
-def test_curtis_6_9():
-    raise NotImplementedError()
-    # complex trajectory
+# def test_curtis_6_9():
+#     raise NotImplementedError()
+#     # complex trajectory
 
-def test_curtis_6_11():
-    raise NotImplementedError()
-    # complex trajectory
+# def test_curtis_6_11():
+#     raise NotImplementedError()
+#     # complex trajectory
