@@ -198,6 +198,8 @@ def _request_to_orbit(request, grab_first:bool)->Ephemerical_Orbit:
         # replace search:
         request = re.sub(r"COMMAND='([^']*)'",f"COMMAND='{tgt_id}'", request)
         return _request_to_orbit(request, False)
+    if m := re.search(r"No ephemeris for target.*$", result): raise LookupError(m[0])
+
 
 
     mu = re.search(r'Keplerian GM[\s]*:[\s]*([\-+0-9E\.]+)', result)
