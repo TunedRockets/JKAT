@@ -207,7 +207,7 @@ def _request_to_orbit(request, grab_first:bool)->Ephemerical_Orbit:
     mu = float(mu[1])
 
     # get names:
-    m = re.search(r'Target body name:[\s]*([0-9]*)?[\s]*(.*)[\s]+\((.*)\)[\s]*{source:', result)
+    m = re.search(r'Target body name:[\s]*([0-9P/]*)?[\s]*(.*)[\s]+(\((.*)\)[\s]*)?{source:', result)
     if m is None: raise LookupError("Couldn't find value: Target body name")
     # why JPL do you make the name scheme inconsistent?!?!?!
     if m[1] != '': # small body
