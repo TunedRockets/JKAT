@@ -15,7 +15,7 @@ __all__ = [
     'orbit_from_keplerian',
     'orbit_from_rv',
     'orbit_from_lambert',
-    'orbit_from_lambert_transfer'
+    'orbit_from_transfer'
 ]
 
 def orbit_from_ephemeris(a:float, e:float, i:float, L:float, longp:float, raan:float, mu:float)->Orbit:
@@ -44,10 +44,10 @@ def orbit_from_ephemeris(a:float, e:float, i:float, L:float, longp:float, raan:f
     tp = -M2t(M,e,p2h(p,mu),mu)
     return Orbit(p,e,i,raan,argp,tp,mu)
 
-def orbit_from_keplerian(a:float, e:float, i:float, raan:float, argp:float, f:float, mu:float)->Orbit:
+def orbit_from_keplerian(a:float, e:float, i:float, raan:float, argp:float, f:float, mu:float, t:float=0)->Orbit:
     '''
     Generate an orbit from the 6 keplerian elements. true anomaly assumed to be
-    the anomaly at the epoch, (from which the periapsis passage is calculated)
+    the anomaly at the epoch, unless otherwise specified
 
     :param a: Semi-major axis
     :type a: float
@@ -63,10 +63,12 @@ def orbit_from_keplerian(a:float, e:float, i:float, raan:float, argp:float, f:fl
     :type theta: float
     :param sgp: Parent body standard gravitational parameter
     :type sgp: float
+    :param t: Time, defaults to 0
+    :type t: float, optional
     '''
     if (e < 1 and a < 0) or (e > 1 and a > 0) or (e == 1 and a != m.inf): raise ValueError("Eccentricity and Semi-major axis sign mismatch") 
     p = a2p(a,e)
-    tp = -f2t(f,e,p2h(p,mu),mu)
+    tp = t-f2t(f,e,p2h(p,mu),mu)
     ob = Orbit(p,e,i,raan,argp,tp,mu)
     return ob
 
@@ -85,8 +87,15 @@ def from_elements(*,p:float|None=None, e:float|None=None, a:float|None=None,
 def orbit_from_rv(rvec:np.ndarray, vvec:np.ndarray, mu:float, t:float=0)->Orbit:
     '''
     Creates an orbit given a position and velocity vector.\n
-    the time is given to set the orbit within the epoch, if nothing is provided then
-    it's assumed the given data is at the epoch.
+
+    :param rvec: position vector
+    :type rvec: np.ndarray
+    :param vvec: velocity vector
+    :type vvec: np.ndarray
+    :param mu: standard gravitational parameter
+    :type mu: float
+    :param t: time, defaults to 0
+    :type t: float, optional
     '''
     p,e,i,raan,argp,f = vectors2kep(rvec,vvec,mu)
     tp = t - f2t(f,e,p2h(p,mu),mu)
@@ -99,15 +108,46 @@ def orbit_from_lambert(r1vec:np.ndarray, r2vec:np.ndarray, t_start:float,
     start_time is the time at r1, end_time is the time at r2.
     if prograde is left none, the short way is used, otherwise the prograde or 
     retrograde depending on its value
-    start_time also used to set orbit in proper epoch'''
+    start_time also used to set orbit in proper epoch
+
+    :param r1vec: position vector at starting time
+    :type r1vec: np.ndarray
+    :param r2vec: position vector at end time
+    :type r2vec: np.ndarray
+    :param t_start: start time
+    :type t_start: float
+    :param t_end: end time
+    :type t_end: float
+    :param mu: standard gravitational parameter
+    :type mu: float
+    :param prograde: whether to use the prograde or retrograde path
+    or the short path if None, defaults to None
+    :type prograde: bool | None, optional
+    '''
     v1vec, _ = lambert(r1vec,r2vec,(t_end-t_start),mu,prograde)
     ob = orbit_from_rv(r1vec,v1vec, mu, t_start)
     return ob
 
-def orbit_from_lambert_transfer(origin:Orbit, destination:Orbit, t_start:float,
+def orbit_from_transfer(origin:Orbit, destination:Orbit, t_start:float,
                         t_end:float, prograde:bool|None = None)->Orbit:
-    '''same as orbit from lambert but with initial and final positions
-    obtained from orbits'''
+    '''creates an orbit by solving lambert's problem\n
+    initial and final positions are given by the origin and destination orbit
+    if prograde is left none, the short way is used, otherwise the prograde or 
+    retrograde depending on its value
+    start_time also used to set orbit in proper epoch
+
+    :param origin: origin orbit
+    :type origin: Orbit
+    :param destination: destination orbit
+    :type destination: Orbit
+    :param t_start: start time
+    :type t_start: float
+    :param t_end: end time
+    :type t_end: float
+    :param prograde: whether to use the prograde or retrograde path
+    or the short path if None, defaults to None
+    :type prograde: bool | None, optional
+    '''
     r1vec = origin.t2rvec(t_start)
     r2vec = destination.t2rvec(t_end)
     return orbit_from_lambert(r1vec,r2vec,t_start,t_end,origin.mu,prograde)

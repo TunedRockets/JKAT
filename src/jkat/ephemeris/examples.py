@@ -7,7 +7,6 @@ from ..utils import JULIAN_CENTURY, AU, SUN_MU, pe2p
 from .JPLHorizons import horizons_request
 from .realtime import to_time
 from datetime import datetime
-
 from pathlib import Path
 import math as m
 __all__ = [

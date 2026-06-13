@@ -9,7 +9,7 @@ where =["src"]
 
 
 [tool.setuptools.package-data]                                                                                                           
-jkat=['ephemeris/*.txt']
+jkat=['ephemeris/*.cache']
 # bad way but it is what works
 
 [project]

@@ -8,8 +8,7 @@ import re
 import datetime as dt
 import math
 from pathlib import Path
-from typing import Callable
-import time
+import os
 
 from ..utils.consts import JULIAN_YEAR
 from .realtime import to_JD, from_JD, to_time
@@ -23,7 +22,6 @@ __all__ = [
 
 
 URL = "https://ssd.jpl.nasa.gov/api/horizons.api?format=text"
-
 
 # =====
 
@@ -127,7 +125,12 @@ def _request_cache(request:str, grab_first:bool)->Ephemerical_Orbit:
             pickle.dump(cache,file)
     return result
 
-
+def horizons_clear_cache():
+    '''Clear the JPL Horizons Cache,
+    Warning! This will require re-loading the default planets if called.
+    '''
+    os.remove(CACHE)
+    return;
 
 
 
@@ -138,9 +141,36 @@ def horizons_request(name:str|int,
                      t_end:float|dt.datetime = JULIAN_YEAR,
                      steps:int = 50,
                      grab_first:bool=True)->Ephemerical_Orbit:
-    '''request ephemeris from horizons and get mu and the osculating elements as a list along with time.
+    '''request ephemeris from JPL Horizons and generate an `Ephemerical_Orbit`.
+    Ephemerical Orbits behave like regular orbits, but will change orbital elements
+    over time in accordance with the provided ephemeris
     if several items match the name, it will pick the first that matches.
-    Stores all requests and their returns in a cache'''
+    Stores all requests and their returns in a cache to avoid needless API requests.
+
+    :param name: Name of the body, for unambiguous result, use the JPL ID of the body
+    :type name: str | int
+    :param center: Body to consider as center for the ephemeris,
+    defaults to the sun (10)
+    :type center: str | int, optional
+    :param ecliptic: Whether to use the ecliptic or parent equator as basis for 
+    orbital elements, defaults to False
+    :type ecliptic: bool, optional
+    :param t_start: First time considered for the ephemeris, 
+    too far in the past may result in bad request depending on body, defaults to J2000 ephoch
+    :type t_start: float | dt.datetime, optional
+    :param t_end: Last time considered for the ephemeris, 
+    too far in the future may result in bad request depending on body,
+    defaults to 1 Jan 2001
+    :type t_end: float | dt.datetime, optional
+    :param steps:number of steps to include in ephemeris, more steps mean more 
+    temporally granular result, defaults to 50
+    :type steps: int, optional
+    :param grab_first: If true, will use first body supplied by Horizons if multiple bodies
+    match the request, defaults to True
+    :type grab_first: bool, optional
+    :return: Desired Ephemerical orbit
+    :rtype: Ephemerical_Orbit
+    '''
 
     if isinstance(name,int): name = str(name)
     if isinstance(center,int): center = str(center)

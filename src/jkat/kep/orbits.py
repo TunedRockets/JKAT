@@ -13,7 +13,8 @@ class Orbit():
     '''
     Main class to represent a keplerian orbit
     values of the orbit are stored as a six-tuple of keplerian elements,\n
-    $(p,e,i,\\Omega,\\omega,t_p)$
+    (parameter, eccentricity, inclination, right ascension of the ascending node,
+    argument of periapsis, time of periapsis passage)
     as such, a parent body must be represented in the form of a given sgp
     as a 7th element.
     Other variables are accessed through property accessors.
@@ -39,13 +40,13 @@ class Orbit():
         self.i = i
         '''inclination'''
         self.raan = raan
-        '''Right ascension of the ascending node'''
+        '''right ascension of the ascending node'''
         self.argp = argp
         '''argument of periapsis'''
         self.tp = tp
         '''time of periapsis passage'''
         self.mu = mu
-        '''Parent body standard gravitational parameter'''
+        '''parent body standard gravitational parameter'''
 
     def __repr__(self) -> str: # always need a repr (for debugging at least)
         return f"Orbit:\n {self.p=}\n {self.e=}\n {self.i=}\n {self.raan=}\n {self.argp=}\n {self.tp=}\n {self.mu=}"
