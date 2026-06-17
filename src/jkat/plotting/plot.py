@@ -9,6 +9,7 @@ import numpy as np
 
 from ..kep import Orbit
 from ..ephemeris import *
+from ..utils import r2f
 __all__ = [
     'plot',
     'center',
@@ -37,8 +38,9 @@ def plot(
         f_bounds:tuple[float,float]|None = None,
         t_bounds:tuple[float,float]|None = None,
         *,
-        stilts:bool|float = m.radians(5),
-        stilt_separation:float = m.radians(10),
+        stilts:bool|float = m.radians(5), # min inclination to add stilts
+        stilt_number:int = 10, # number of stilts
+        stilt_spacing:str = 'angle',
         f:float|None = None,
         t:float|None = None,
         forward_predict:bool = False,
@@ -121,9 +123,18 @@ def plot(
     
     # add stilts:
     if stilts is True or (isinstance(stilts,float) and abs(ob.i) > stilts):
-        ss =  np.arange(f_low, f_high+1e-6, stilt_separation)
+        match stilt_spacing:
+            case "range": # based on distance from barycenter
+                r = np.linspace(ob.pe, min(max_distance, ob.ap), stilt_number)
+                ss = r2f(r, ob.p, ob.e)
+                ss = np.concat((ss,[0], -ss))
+            # case "distance": # based on distance travelled. TODO
+
+            case _: #angle
+                ss =  np.linspace(f_low, f_high, stilt_number) # straight angle arange
+        ss = ss[f_low <= ss]; ss = ss[ss <= f_high]
         ss = ob.rvec(ss)
-        ss = ss[np.linalg.norm(ss,axis=1) < max_distance]
+        ss = ss[np.linalg.norm(ss,axis=1) <= max_distance]
         for s in ss:
             ax.plot((s[0],s[0]),
                     (s[1],s[1]),

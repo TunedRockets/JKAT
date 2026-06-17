@@ -127,13 +127,6 @@ def pe2p(pe:float, e:float)->float:
     (supports hyperbolic orbits)'''
     return pe*(1+e)
 
-def r2f(r:float, p:float, e:float)->float:
-    '''return true anomaly that results in given radius.
-    returns nan if radius is impossible'''
-    try: return m.acos((p/r - 1)/e)
-    except (ValueError): return m.nan
-
-
 # === polar equation derivatives ===
 
 @overload
@@ -144,6 +137,17 @@ def f2r(f:float, p:float, e:float)->float:...
 def f2r(f:float|np.ndarray, p:float, e:float)->float|np.ndarray:
     '''polar equation radius'''
     return p/(1+e*np.cos(f))
+
+@overload
+def r2f(r:float, p:float, e:float)->float:...
+@overload
+def r2f(r:np.ndarray, p:float, e:float)->np.ndarray:...
+
+def r2f(r:float|np.ndarray, p:float, e:float)->float|np.ndarray:
+    '''return true anomaly that results in given radius.
+    returns nan if radius is impossible'''
+    try: return np.arccos((p/r - 1)/e)
+    except (ValueError): return np.nan
 
 def f2vt(f:float, p:float, e:float, h:float)->float:
     '''tangential velocity'''

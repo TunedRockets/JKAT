@@ -10,16 +10,10 @@ from pprint import pprint
 import matplotlib.pyplot as plt
 import datetime as dt
 
-# jkat.add_solar_system()
-# o = jkat.examples.Omuamua
-# jkat.plot(o, t=o.tp, t_bounds=(-m.inf, o.tp), max_distance=6*AU)
-# jkat.show()
 
-''' 
-need trajectories: 
-intercept, 
-rendezvous
-'''
-from jkat.ephemeris.JPLHorizons import horizons_request
 
-horizons_request('Eris', t_start=jkat.ephemeris.to_time(dt.datetime(2035,1,1)), t_end=jkat.ephemeris.to_time(dt.datetime(2037,1,1)))
+jkat.add_solar_system()
+o = jkat.ephemeris.examples.Omuamua
+jkat.plot(o, t=o.tp, t_bounds=(-m.inf, o.tp+jkat.YEAR), max_distance=6*jkat.AU, stilt_spacing='range', stilt_number=30)
+jkat.show()
+

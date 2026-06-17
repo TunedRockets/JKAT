@@ -7,4 +7,4 @@ from .orbits import *
 
 # methods for creating orbits
 from .determination import \
-orbit_from_keplerian, orbit_from_rv, orbit_from_lambert, orbit_from_transfer
+orbit_from_keplerian, orbit_from_rv, orbit_from_lambert, orbit_from_transfer, orbit_from_ephemeris
