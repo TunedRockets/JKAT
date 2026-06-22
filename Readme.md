@@ -19,7 +19,7 @@ The source code is also available on [github](https://github.com/TunedRockets/JK
 # guide
 
 > Warning!
-This package is very much in alpha, expect regular changes.
+This package is very much in alpha, expect regular changes. The software has been tested against real examples, and should be accurate in most cases, but the software is provided "as is", without warranty or guarantee of correctness.
 
 
 Guide coming soon...
