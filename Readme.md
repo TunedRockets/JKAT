@@ -9,6 +9,8 @@ JKAT started development in the summer 2025, and was made public in april 2026. 
 - solving for position and velocity on an orbit given a time
 - creating transfers between orbits using a lambert solver
 - optimizing said transfer for different parameters
+- interfacing with the JPL Horizons database
+- plot resulting orbits
 
 # installation
 JKAT is available on the [Python Package Index](https://pypi.org/project/jkat/). To install it with pip, simply type `python -m pip install jkat`.
