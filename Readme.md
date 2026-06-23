@@ -2,7 +2,7 @@
 Taken from the cover art of Frank Hayes' Don't Ask">
 
 # Johannes-Kepler Astrodynamical Toolbox
-JKAT is a python package that makes astrodynamical calculations easy. Many astrodynamical problems are simple to formulate, but require lengthy calculation processes to solve. Several tools such as GMAT, Pykep, and TUDAT exist to make this easier, but those programs often has a certain barrier of entry (and aren't written by me). So as a fun project, JKAT aims to solve many of the same problems, but with an hopefully simpler API/interface, and quicker learning curve.
+JKAT is a python package that makes astrodynamical calculations easy. Many astrodynamical problems are simple to formulate, but require lengthy calculation processes to solve. Several tools such as GMAT, Pykep, and TUDAT exist to make this easier, but those programs often has a certain barrier of entry (and aren't written by me). So as a fun project, JKAT aims to solve many of the same problems, but with an hopefully simpler API/interface, and quicker learning curve for the user.
 
 JKAT started development in the summer 2025, and was made public in april 2026. current features include:
 - creating and modifying keplerian orbits
@@ -19,24 +19,13 @@ The source code is also available on [github](https://github.com/TunedRockets/JK
 # guide
 
 > Warning!
-This package is very much in alpha, expect regular changes. The software has been tested against real examples, and should be accurate in most cases, but the software is provided "as is", without warranty or guarantee of correctness.
+This package is very much in alpha, expect regular changes. The software has been tested against real examples, and should be accurate in most cases, but the software is provided "as is", without warranty, or guarantee of correctness.
 
 
-Guide coming soon...
+Guide coming soon, in the meantime, check the examples in the `/examples` folder on github
 
 
 
 
 
-# TODO:
- - [ ] flesh out tests for curtis chapter 6
- - [ ] remove duplication in transfer.direct
-
- - [ ] gravity assist optimizer
- - [ ] perturbations
- - [ ] gravity assists and assist planning
- - [ ] figure out best way to represent horizons in examples (and figure out wierdness at t=0)
- - [ ] reset plot on window close
- - [ ] proper docstrings
- - [ ] make imports like `from x import y`/`from x import *` consistent.
 

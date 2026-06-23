@@ -7,4 +7,4 @@ for now just a global plotter
 
 from .plot import *
 
-from matplotlib.pyplot import show, axis
+from matplotlib.pyplot import axis

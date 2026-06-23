@@ -6,16 +6,19 @@ methods for finding optimal transfers are not included, just generation of orbit
 from .orbits import Orbit
 from ..trajectories import lambert
 from ..utils import stumpff_c, stumpff_s, unit, a2p,\
-p2h, root_finder_bisection, L2M, M2t, f2t, vectors2kep
+p2h, root_finder_bisection, L2M, M2t, f2t, vectors2kep, DAY, n2T, T2a, EARTH_MU
+from ..ephemeris import to_time
 import math as m
 import numpy as np
+import datetime as dt
 
 __all__ = [
     'orbit_from_ephemeris',
     'orbit_from_keplerian',
     'orbit_from_rv',
     'orbit_from_lambert',
-    'orbit_from_transfer'
+    'orbit_from_transfer',
+    'orbit_from_tle',
 ]
 
 def orbit_from_ephemeris(a:float, e:float, i:float, L:float, longp:float, raan:float, mu:float)->Orbit:
@@ -152,6 +155,95 @@ def orbit_from_transfer(origin:Orbit, destination:Orbit, t_start:float,
     r2vec = destination.t2rvec(t_end)
     return orbit_from_lambert(r1vec,r2vec,t_start,t_end,origin.mu,prograde)
     
+
+
+
+def orbit_from_tle(tle:str)->Orbit:
+    '''create an orbit from a set of two-line elements.
+    optional first line may include title, making it a three-line element set
+    currently discards all non-osculating data.
+
+
+    :param tle: string of TLE definition. optional title followed by two lines
+    :type tle: str
+    :return: Osculating orbit at the TLE ephemeris
+    :rtype: Orbit
+    '''
+    lines = tle.strip().split('\n')
+    if len(lines) > 3: raise ValueError("Invalid TLE (more than three lines)")
+    elif len(lines) == 3: name = lines.pop(0)
+    else: name = '' # no name
+    line1 = lines[0]
+    line2 = lines[1]
+
+    # checksum:
+    sum = 0
+    for c in line1[0:68]:
+        if '0' <= c <= '9':
+            sum += ord(c) - ord('0')
+        elif c == '-': sum += 1
+    if len(line1) == 69 and (sum % 10) != int(line1[68]):
+        raise ValueError(f"invalid checksum line 1 ({sum % 10} != {line1[68]})")
+    sum = 0
+    for c in line2[0:68]:
+        if '0' <= c <= '9':
+            sum += ord(c) - ord('0')
+        elif c == '-': sum += 1
+    if len(line2) == 69 and (sum % 10) != int(line2[68]):
+        raise ValueError(f"invalid checksum line 2 ({sum % 10} != {line2[68]})")
+
+
+    # extract first line
+    catalog_no = line1[2:7]
+    catalog_no2 = line2[2:7]
+    if catalog_no != catalog_no2: raise ValueError(
+        f"Invalid TLE, catalog number mismatch. ({catalog_no} != {catalog_no2})")
+
+    if catalog_no[0] > 'a': catalog_no = ( # deal with Alpha-5 encoding
+        (ord(catalog_no[0]) - ord('a') + 1)*100_000
+        + int(catalog_no[1:])
+    )
+    else: catalog_no = int(catalog_no)
+    
+    int_designator = line1[9:17]
+    epoch_yr = int(line1[18:20])
+    epoch_day = float(line1[20:32])
+    if epoch_yr <= 56: epoch_yr += 2000
+    else: epoch_yr += 1900
+
+    epoch = dt.datetime(epoch_yr,1,1) + dt.timedelta(epoch_day)
+    epoch = to_time(epoch) # set into right epoch
+    dn = float(line1[33:43])
+    d2n = float(line1[44] + '0.' + line1[45:50]) * 10**(int(line1[50:52])-1) # expoentiation interpreted
+    Bstar = float(line1[53] + '0.' + line1[54:59]) * 10**(int(line1[59:61]))
+    set_no = int(line1[64:68])
+
+    # extract second line:
+    inclination = float(line2[8:16])
+    inclination = m.radians(inclination)
+    raan = float(line2[17:25])
+    raan = m.radians(raan)
+    ecc = float('0.'+ line2[26:33])
+    argp = float(line2[34:42])
+    argp = m.radians(argp)
+    M = float(line2[43:50])
+    M = m.radians(M)
+    rev = float(line2[52:63])
+    rev /= DAY # revolutions per second
+    rev_no = int(line2[63:68])
+
+
+    # turn into osculating orbit:
+    T = 1/rev # seconds per revolution
+    a = T2a(T, EARTH_MU)
+    p = a2p(a, ecc)
+    h = p2h(p,EARTH_MU)
+    t = M2t(M,ecc,h,EARTH_MU)
+    tp = epoch - t
+    return Orbit(
+        p, ecc, inclination, raan, argp, tp, EARTH_MU
+    )
+
 
 def orbit_from_gauss(observations:list[np.ndarray],
                         times:list[float], 

@@ -14,7 +14,9 @@ __all__ = [
     'plot',
     'center',
     'add_solar_system',
-    'clf'
+    'clf',
+    'show',
+    'set_view_angle',
 ]
 
 
@@ -36,6 +38,21 @@ def clf():
     ax.grid(False)
     ax.set_axis_off()
     mpl.rcParams['axes3d.mouserotationstyle'] = 'azel'
+
+    # default view:
+    ax.azim = 0 # type:ignore
+    ax.elev = 90 # type:ignore
+
+    return;
+
+def set_view_angle(az:float,el:float,r:float=10):
+    '''viewing angle of next plot, angles in degrees, r seems not to work
+    due to pyplot'''
+    init()
+    global ax
+    ax.azim = az # type:ignore
+    ax.elev = el # type:ignore
+    ax.dist = r # type:ignore
     return;
 
 # to make:
@@ -45,7 +62,7 @@ def plot(
         t_bounds:tuple[float,float]|None = None,
         *,
         stilts:bool|float = m.radians(5), # min inclination to add stilts
-        stilt_number:int = 10, # number of stilts
+        stilt_number:int = 20, # number of stilts
         stilt_spacing:str = 'angle',
         f:float|None = None,
         t:float|None = None,
@@ -88,8 +105,8 @@ def plot(
     elif t_bounds is None: # fbounds given
         if ob.e > 1:
             f_low = max(-ob.finf, f_bounds[0]) # type:ignore
-            f_high = min(ob.finf, t_bounds[1]) # type:ignore
-        else: f_low = f_bounds[0]; f_high = t_bounds[1] # type: ignore
+            f_high = min(ob.finf, f_bounds[1]) # type:ignore
+        else: f_low = f_bounds[0]; f_high = f_bounds[1] # type: ignore
     else:
         if ob.e > 1:
             f_low = max(-ob.finf, ft_low, f_bounds[0]) # type:ignore
@@ -109,7 +126,8 @@ def plot(
 
     # generate colors if not supplied
     kwargs.setdefault('color',np.random.random(3))
-    pw = kwargs.pop('pw',3)
+    point_size = kwargs.pop('s', 40)
+    if point_size is None: point_size = 40
 
     # plot the orbit:
     init()
@@ -121,7 +139,7 @@ def plot(
         
         p = ob.t2rvec(t) if t is not None else ob.rvec(f) # type: ignore
         if np.linalg.norm(p) < max_distance:
-            ax.scatter(p[0],p[1],p[2], **kwargs, lw=pw)
+            ax.scatter(p[0],p[1],p[2], **kwargs, s = float(point_size)) # type:ignore
 
             # add label:
             if point_label:
@@ -161,7 +179,7 @@ def plot(
 def center(**kwargs):
     '''add center to the plot'''
     init()
-    kwargs.setdefault('lw', 14)
+    kwargs.setdefault('s', 70)
     kwargs.setdefault('color', 'gold')
     ax.scatter(0,0,0, **kwargs)
     return;
@@ -178,7 +196,13 @@ def add_solar_system(t:float = 0, planets:str='11111000',symbols:bool=False, ini
         if planets[i] == '0': continue
         plot(pla[i], t=t, color = colors[i], **kwargs, 
              point_label= (sym[i] if symbols else (initial[i] if initials else None)),
-             pw = (9 if (symbols or initials) else None)
+             s = (90 if (symbols or initials) else None)
              )
-    center(color='gold', lw = (9 if (symbols or initials) else 4))
+    center(color='gold', s = (90 if (symbols or initials) else 50))
 
+def show(**kwargs):
+    '''wrapper of plt.show that ensures the frame is cleared for future renders'''
+    plt.show(**kwargs)
+
+    global ax # erase for next show
+    ax = None # type:ignore
