@@ -51,14 +51,13 @@ class Ephemerical_Orbit(Orbit):
                  tt:np.ndarray,
                  mu: float,
                  name:str,
-                 jplid:int) -> None:
+                ) -> None:
         
         self.pp = pp; self.ee = ee; self.ii = ii; self.rraan = rraan; self.tt = tt
         self.aargp = aargp; self.ttp = ttp
         self.current_time = 0
         self.mu = mu
         self.name = name
-        self.jplid = jplid
     @property
     def p(self): return np.interp(self.current_time,self.tt,self.pp)
     @property
@@ -104,7 +103,7 @@ class Ephemerical_Orbit(Orbit):
         return Orbit(self.p,self.e,self.i,self.raan,self.argp,self.tp,self.mu)
     
     def __repr__(self) -> str:
-        return f"{self.name} ({self.jplid}):\n{self.current_time=}\n {self.p=}\n {self.e=}\n {self.i=}\n {self.raan=}\n {self.argp=}\n {self.tp=}\n {self.mu=}"
+        return f"{self.name}:\n{self.current_time=}\n {self.p=}\n {self.e=}\n {self.i=}\n {self.raan=}\n {self.argp=}\n {self.tp=}\n {self.mu=}"
     
 
 # ====
@@ -181,7 +180,7 @@ def horizons_request(name:str|int,
 
     request += f"&COMMAND='{URI_sanitize(name)}'"
     request += f"&CENTER='{URI_sanitize(center)}'"
-    ecl = 'ECLIPTIC' if ecliptic else 'BODY_EQUATOR'
+    ecl = 'ECLIPTIC' if ecliptic else 'FRAME'
     request += f"&REF_PLANE='{ecl}'"
     request += f"&EPHEM_TYPE='ELEMENTS'"
     request += f"&OBJ_DATA='{"NO"}'" # don't need that/not implemented yet
@@ -237,14 +236,9 @@ def _request_to_orbit(request, grab_first:bool)->Ephemerical_Orbit:
     mu = float(mu[1])
 
     # get names:
-    m = re.search(r'Target body name:[\s]*([0-9P/]*)?[\s]*(.*)[\s]+(\((.*)\)[\s]*)?{source:', result)
+    m = re.search(r'Target body name:[\s]*(.+?)[\s]*{source:', result)
     if m is None: raise LookupError("Couldn't find value: Target body name")
-    # why JPL do you make the name scheme inconsistent?!?!?!
-    if m[1] != '': # small body
-        jplidx = int(m[1])
-    else: # main body
-        jplidx = int(m[3])
-    jplname = m[2]
+    jplname = m[1]
 
     # get ephemeris values
     content = re.search(r'\$\$SOE(?s:(.*))\$\$EOE', result)
@@ -312,7 +306,7 @@ def _request_to_orbit(request, grab_first:bool)->Ephemerical_Orbit:
     # create orbit:
     ob = Ephemerical_Orbit(
         pp,ee,ii,oo,ww,ttp, times,mu,
-        jplname,jplidx
+        jplname
     )
     ob.current_time = ob.tt[0]
     return ob

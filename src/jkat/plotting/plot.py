@@ -13,7 +13,8 @@ from ..utils import r2f
 __all__ = [
     'plot',
     'center',
-    'add_solar_system'
+    'add_solar_system',
+    'clf'
 ]
 
 
@@ -24,13 +25,18 @@ ax:Axes = None # type:ignore
 def init():
     global ax
     if not ax is None: return;
+    else: return clf()
+    
+
+def clf():
+    '''clear plot so a new plot can be drawn'''
+    global ax
     fig, ax = plt.subplots(subplot_kw={'projection': '3d'},
                             gridspec_kw=dict(top=1.07, bottom=0.02, left=0, right=1))
     ax.grid(False)
     ax.set_axis_off()
     mpl.rcParams['axes3d.mouserotationstyle'] = 'azel'
-
-
+    return;
 
 # to make:
 def plot(
@@ -131,7 +137,7 @@ def plot(
             # case "distance": # based on distance travelled. TODO
 
             case _: #angle
-                ss =  np.linspace(f_low, f_high, stilt_number) # straight angle arange
+                ss =  np.linspace(max(-np.pi, -ob.finf), min(np.pi, ob.finf), stilt_number) # straight angle arange
         ss = ss[f_low <= ss]; ss = ss[ss <= f_high]
         ss = ob.rvec(ss)
         ss = ss[np.linalg.norm(ss,axis=1) <= max_distance]

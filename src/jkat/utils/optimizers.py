@@ -38,10 +38,15 @@ def root_finder_bisection(f:Callable[[float],float], lower:float, upper:float, t
     :rtype: float
     '''
 
+
     if not ( f(lower) * f(upper) < 0): # check the initial interval contains a root
         raise ValueError("bounds have same sign")   
+    
+    # calculate number of iterations:
+    n = m.ceil(m.log2((upper-lower)/tolerance)) 
+    
     middle = (lower + upper)/2
-    while 0.5*abs(upper-lower) > tolerance:  # check that we're not converged
+    for _ in range(n):
         middle = (lower + upper)/2                  # midpoint of current interval
         if f(lower) * f(middle) < 0:           # select which 1/2 interval to continue with
             upper = middle
@@ -66,8 +71,10 @@ def root_finder_newton(f:Callable[[float],float], df:Callable[[float],float],x0:
     :return: x s.t. f(x) approx 0
     :rtype: float
     '''
+    # TODO: this fails on FPE if x0 is too big, 
+    # can't reach the low FP for being below precision
 
-    for i in range(max_iter):
+    for _ in range(max_iter):
         fx = f(x0)
         if abs(fx) < precision: return x0
         dx = fx/df(x0)

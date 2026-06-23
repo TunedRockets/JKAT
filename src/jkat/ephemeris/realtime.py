@@ -39,10 +39,13 @@ def to_time(d:dt.datetime|dt.date)->float:
     :return: time in seconds since J2000
     :rtype: float
     '''
-    if isinstance(d,dt.date): d = dt.datetime(d.year,d.month,d.day)
-    delta = d - J2000_epoch
-    return delta.total_seconds()
-
+    try:
+        delta = d - J2000_epoch
+        return delta.total_seconds()
+    except TypeError:
+        d = dt.datetime(d.year,d.month,d.day) # for date only inputs
+        delta = d - J2000_epoch
+        return delta.total_seconds()
 
 def from_time(t:float)->dt.datetime:
     '''turn seconds since J2000 epoch to python datetime UTC

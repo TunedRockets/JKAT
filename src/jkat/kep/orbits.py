@@ -49,7 +49,7 @@ class Orbit():
         '''parent body standard gravitational parameter'''
 
     def __repr__(self) -> str: # always need a repr (for debugging at least)
-        return f"Orbit:\n {self.p=}\n {self.e=}\n {self.i=}\n {self.raan=}\n {self.argp=}\n {self.tp=}\n {self.mu=}"
+        return f"Orbit:\n p: {self.p}\n e: {self.e}\n i: {self.i}\n raan: {self.raan}\n argp: {self.argp}\n tp: {self.tp}\n mu: {self.mu}"
     
 # === aliases ===
     @property
@@ -115,6 +115,10 @@ class Orbit():
         # p = h^2/mu
         self.p = h2p(h,self.mu)
 
+    @property
+    def angular_momentum(self)->float:
+        '''alias of self.h'''
+        return self.h
     
 
     @property
@@ -139,8 +143,13 @@ class Orbit():
     def r(self,f:float|np.ndarray)->float|np.ndarray:
         '''polar equaiton radius'''
         return f2r(f,self.p,self.e)
-    
-    def v(self,f:float)->float:
+
+    @overload
+    def v(self,f:float)->float:...
+    @overload
+    def v(self,f:np.ndarray)->np.ndarray:...
+
+    def v(self,f:float|np.ndarray)->float|np.ndarray:
         '''polar equation velocity'''
         return f2v(f,self.p,self.e,self.h)
     
@@ -330,6 +339,11 @@ class Orbit():
     def n(self)->float:
         '''mean motion of orbit'''
         return h2n(self.h,self.e,self.mu)
+    
+    @property
+    def mean_motion(self)->float:
+        '''alias of self.n'''
+        return self.n
 
     def link_tf(self,t:float,f:float)->float:
         '''link a certain time and true anomaly by changing tp'''

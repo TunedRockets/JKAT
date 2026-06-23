@@ -1,19 +1,26 @@
 
 
 
-import src.jkat as jkat
-import src.jkat.utils as utils
-from src.jkat.ephemeris.JPLHorizons import horizons_request
-import math as m
+import jkat
 import numpy as np
-from pprint import pprint
-import matplotlib.pyplot as plt
 import datetime as dt
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+parameter = 29508 # [km]
+eccentricity = 0.0002931 # [-]
+inclination = np.radians(56.9925) # [deg]
+right_ascention_ascending_node = np.radians(341.627) # [deg]
+argument_perigee = np.radians(54.4577) # [deg]
+time_periapsis = dt.datetime(2026,6,22, 15,10,13)
+time_periapsis = jkat.to_time(time_periapsis) # we convert the date into seconds
 
-
-
-jkat.add_solar_system()
-o = jkat.ephemeris.examples.Omuamua
-jkat.plot(o, t=o.tp, t_bounds=(-m.inf, o.tp+jkat.YEAR), max_distance=6*jkat.AU, stilt_spacing='range', stilt_number=30)
-jkat.show()
+ob = jkat.Orbit(
+        p = parameter,
+        e = eccentricity,
+        i = inclination,
+        raan = right_ascention_ascending_node,
+        argp = argument_perigee,
+        tp = time_periapsis,
+        mu = jkat.EARTH_MU
+)
 

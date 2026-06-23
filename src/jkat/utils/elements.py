@@ -149,17 +149,32 @@ def r2f(r:float|np.ndarray, p:float, e:float)->float|np.ndarray:
     try: return np.arccos((p/r - 1)/e)
     except (ValueError): return np.nan
 
-def f2vt(f:float, p:float, e:float, h:float)->float:
+@overload
+def f2vt(f:float, p:float, e:float, h:float)->float:...
+@overload
+def f2vt(f:np.ndarray, p:float, e:float, h:float)->np.ndarray:...
+
+def f2vt(f:float|np.ndarray, p:float, e:float, h:float)->float|np.ndarray:
     '''tangential velocity'''
     return h/f2r(f,p,e)
 
-def f2vr(f:float, p:float, e:float, h:float)->float:
-    '''radial velocity'''
-    return h/p * e * m.sin(f)
+@overload
+def f2vr(f:np.ndarray, p:float, e:float, h:float)->np.ndarray:...
+@overload
+def f2vr(f:float, p:float, e:float, h:float)->float:...
 
-def f2v(f:float, p:float, e:float, h:float)->float:
+def f2vr(f:float|np.ndarray, p:float, e:float, h:float)->float|np.ndarray:
+    '''radial velocity'''
+    return h/p * e * np.sin(f)
+
+@overload
+def f2v(f:float, p:float, e:float, h:float)->float:...
+@overload
+def f2v(f:np.ndarray, p:float, e:float, h:float)->np.ndarray:...
+
+def f2v(f:float|np.ndarray, p:float, e:float, h:float)->float|np.ndarray:
     '''scalar velocity'''
-    return m.sqrt(f2vr(f,p,e,h)**2 + f2vt(f,p,e,h)**2)
+    return np.sqrt(f2vr(f,p,e,h)**2 + f2vt(f,p,e,h)**2)
 
 def f2fpa(f:float, e:float)->float:
     '''flight path angle'''

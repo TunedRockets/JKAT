@@ -35,6 +35,7 @@ __all__ = [
     'p2char',
     "h2n",
     'T2n',
+    'n2T',
     'a2n',
     "M2E",
     "E2M",
@@ -90,6 +91,10 @@ def h2n(h:float, e:float, mu:float)->float:
 def T2n(T:float)->float:
     '''period to mean motion'''
     return 2*m.pi/T
+
+def n2T(n:float)->float:
+    '''mean motion to period'''
+    return 2*m.pi/n
 
 def a2n(a:float, mu:float)->float:
     '''semi-major axis to mean motion'''
