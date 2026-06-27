@@ -25,7 +25,4 @@ This package is very much in alpha, expect regular changes. The software has bee
 Guide coming soon, in the meantime, check the examples in the `/examples` folder on github
 
 
-
-
-
-
+(No LLM was involved in creating this software)
