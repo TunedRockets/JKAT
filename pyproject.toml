@@ -14,7 +14,7 @@ jkat=['ephemeris/*.cache']
 
 [project]
 name = "jkat"
-version = "0.1.13"
+version = "0.1.14"
 dependencies = [
     "numpy>=2.4.4",
     "matplotlib>=3.10.9",
