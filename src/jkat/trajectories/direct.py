@@ -38,7 +38,8 @@ def lambert(r1vec:np.ndarray, r2vec:np.ndarray, dt:float, mu:float,
     will choose the short angle by default, however if prograde is true
     it will enforce a prograde orbit (ccw around z-axis).
     likewise if prograde is false, enforce a retrograde orbit.
-    currently only does one revolution solutions'''
+    currently only does one revolution solutions.
+    returns v1vec and v2vec'''
 
 
     r1 = np.linalg.norm(r1vec)
@@ -118,8 +119,9 @@ def direct_transfer(
 )->dict:
     '''function for calculating the optimal transfer between two orbiting objects,
     bounds is the search area, **kwargs determine bounds and weights,
-    softly enforces dv limits to not break optimizer
-    returns dict with: ts,te,dv1,dv2,r'''
+    softly enforces dv limits to not break optimizer,
+    suggestions of points can be inserted with `suggested_points`
+    returns dict with: ts,te,tt,dv1,dv2,r'''
     
     np.seterr(all='ignore')
     
@@ -148,6 +150,7 @@ def direct_transfer(
 
     kwargs.setdefault('prograde', None)
     kwargs.setdefault('soft_max', False)
+    kwargs.setdefault('suggested_points', [])
 
     if not bounds is None:
         kwargs['ts_min'] = bounds[0]
@@ -206,6 +209,12 @@ def direct_transfer(
         kwargs['ts_min'], kwargs['ts_max'], kwargs['te_min'], kwargs['te_max']
     ))
 
+    # add suggested points:
+    if len(kwargs['suggested_points']) > 0:
+        (points := list(points)).extend(kwargs['suggested_points'])
+        points = np.array(points)
+
+
     points[:,1] -= points[:,0] # make travel time
 
     Fpoints = []
@@ -245,6 +254,7 @@ def direct_transfer(
     return {
         "ts": s_opt,
         "te": s_opt+t_opt,
+        'tt': t_opt,
         "dv1": dv1,
         "dv2": dv2,
         'r': np.linalg.norm(r2)

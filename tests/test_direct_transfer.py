@@ -12,7 +12,7 @@ import src.jkat.trajectories as tra
 import matplotlib.pyplot as plt
 
 def assert_optim_works(time_range, origin,destination):
-    dvarr = tra.porkchop_plot(origin,destination,time_range,time_range, rendezvous=True, prograde=True)
+    dvarr = tra.porkchop(origin,destination,time_range,time_range, rendezvous=True, prograde=True)
     idx = np.unravel_index(np.nanargmin(dvarr),dvarr.shape)
     dv_cost = dvarr[idx]
     ts = time_range[idx[0]]
