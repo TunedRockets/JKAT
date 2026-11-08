@@ -272,7 +272,61 @@ def test_curtis_6_2():
     dt = a2T(apse2ae(5000+6378,500+6378)[0],EARTH_MU)/2
     f = ob.f(-dt)
     assert f == approx(m.radians(-275.2), rel=REL)
+
+def test_curtis_6_3():
+
+    ra = 7000
+    rb = 210_000
+    rc = 105_000
+    a_trans, e_trans = apse2ae(rb,ra)
+    ob_trans_1 = orbit_from_keplerian(a_trans,e_trans,0,0,0,0,EARTH_MU)
+    a_trans, e_trans = apse2ae(rb,rc)
+    ob_trans_2 = orbit_from_keplerian(a_trans,e_trans,0,0,0,0,EARTH_MU)
+
+    # hohmann:
+    dv1,dv2,_ = hohmann_transfer(ra, rc, EARTH_MU)
+    hoh_dv = dv1 + dv2
+
+    #bi-elliptic
+    v1 = vcirc(0, ra, 0, p2h(ra,EARTH_MU))
+    v2 = ob_trans_1.v(0)
+    dv1 = v2 - v1
+    v3 = ob_trans_1.v(np.pi)
+    v4 = ob_trans_2.v(np.pi)
+    dv2 = v4 - v3
+    v5 = ob_trans_2.v(0)
+    v6 = vcirc(0,rc,0,p2h(rc,EARTH_MU))
+    dv3 = v5 - v6
+
+    bi_dv = dv1 + dv2 + dv3
+
+    assert bi_dv == approx(4.0285, rel=REL)
+    assert (ob_trans_1.period + ob_trans_2.period) / 2 == approx(5.66*DAY, rel=REL)
+    assert hoh_dv == approx(4.0463, rel=REL)
+
     
+def test_curtis_6_4():
+
+    df = np.radians(90)
+    ra = 13_600
+    rp = 6800
+    
+    a,e = apse2ae(ra,rp)
+    ob = orbit_from_keplerian(a,e,0,0,0,0,EARTH_MU)
+
+    T = ob.T - ob.t(df)
+
+    new_a = T2a(T, EARTH_MU)
+    new_ap = 2*new_a - rp
+    
+    a,e = apse2ae(new_ap,rp)
+    ob2 = orbit_from_keplerian(a,e,0,0,0,0,EARTH_MU)
+    dv = ob.v(0) - ob2.v(0)
+
+    assert 2*abs(dv) == approx(0.4970, rel=REL)
+
+
+
 def test_curtis_6_5():
 
     dt, T = circular_phasing(-m.radians(12), 3, 42_164,EARTH_MU)

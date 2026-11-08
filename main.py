@@ -1,7 +1,7 @@
 
 
 
-import jkat
+import src.jkat as jkat
 import numpy as np
 import datetime as dt
 import matplotlib.pyplot as plt
